@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '@/lib/api';
 import { 
   Coffee, Phone, Search, Award, ShoppingBag, 
@@ -47,7 +47,7 @@ interface CustomerData {
 }
 
 export default function CustomerPortalPage() {
-  const [phone, setPhone] = useState('0912345001');
+  const [phone, setPhone] = useState('');
   const [customer, setCustomer] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,11 +67,6 @@ export default function CustomerPortalPage() {
 
   // Xem chi tiết hóa đơn điện tử
   const [viewingReceipt, setViewingReceipt] = useState<OrderRecord | null>(null);
-
-  // Tự động tải dữ liệu mẫu khi vào trang
-  useEffect(() => {
-    handleLookupPhone('0912345001');
-  }, []);
 
   const handleLookupPhone = async (phoneToLookup: string) => {
     if (!phoneToLookup || phoneToLookup.trim().length < 9) {
@@ -152,12 +147,6 @@ export default function CustomerPortalPage() {
       setRedeemLoading(false);
     }
   };
-
-  const samplePhones = [
-    { name: 'Chị Lan', phone: '0912345001' },
-    { name: 'Anh Minh', phone: '0912345002' },
-    { name: 'Chị Hoa', phone: '0912345003' },
-  ];
 
   const rewardCatalog = [
     { id: 'R1', points: 10, title: 'Voucher Giảm 10.000đ', desc: 'Áp dụng cho mọi hóa đơn tại quầy', icon: Tag, color: 'emerald' },
@@ -248,26 +237,6 @@ export default function CustomerPortalPage() {
                   )}
                 </button>
               </form>
-
-              {/* Gợi ý số điện thoại có sẵn */}
-              <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400">
-                <span>Gợi ý SĐT:</span>
-                <div className="flex gap-1.5">
-                  {samplePhones.map((s, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setPhone(s.phone);
-                        handleLookupPhone(s.phone);
-                      }}
-                      className="text-emerald-700 hover:underline font-semibold cursor-pointer"
-                    >
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
