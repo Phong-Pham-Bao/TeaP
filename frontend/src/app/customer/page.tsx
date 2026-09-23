@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import api from '@/lib/api';
 import { 
   Coffee, Phone, Search, Award, ShoppingBag, 
-  ArrowLeft, Sparkles, CheckCircle2, AlertCircle, 
+  BookOpen, Sparkles, CheckCircle2, AlertCircle,
   TrendingUp, Store, Clock, Gift, QrCode, Tag,
   ChevronRight, Receipt, X, UserPlus, Check, Star,
   ExternalLink, Percent
@@ -162,26 +162,26 @@ export default function CustomerPortalPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
       {/* Top Header */}
-      <header className="bg-[#0F2E22] text-white py-3.5 px-6 shadow-sm sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-emerald-800 rounded-xl text-emerald-300 flex items-center justify-center font-bold">
+      <header className="bg-[#0F2E22] text-white py-3.5 px-4 sm:px-6 shadow-sm sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="w-10 h-10 flex-shrink-0 bg-emerald-800 rounded-xl text-emerald-300 flex items-center justify-center font-bold">
               <Coffee className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-base font-extrabold tracking-tight">CỔNG HỘI VIÊN TEAP</h1>
-              <p className="text-[11px] text-emerald-300">Tra cứu điểm thưởng & Đổi ưu đãi dành cho khách hàng</p>
+            <div className="min-w-0">
+              <h1 className="text-base font-extrabold tracking-tight">TEAP</h1>
+              <p className="hidden text-[11px] text-emerald-300 sm:block">Cổng hội viên &amp; điểm thưởng</p>
             </div>
           </div>
 
           <Link
-            href="/pos"
-            className="text-xs font-semibold text-emerald-200 hover:text-white bg-emerald-900/60 hover:bg-emerald-800 px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 border border-emerald-700/60 cursor-pointer"
+            href="/customer/menu"
+            className="text-xs font-semibold text-emerald-100 hover:text-white bg-emerald-900/60 hover:bg-emerald-800 px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 border border-emerald-700/60 cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Về MÁY POS</span>
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Xem Menu TeaP</span>
           </Link>
         </div>
       </header>
@@ -361,10 +361,10 @@ export default function CustomerPortalPage() {
             </div>
 
             {/* 2. TAB ĐIỀU HƯỚNG CHỨC NĂNG */}
-            <div className="flex border-b border-slate-200 text-xs font-bold space-x-6">
+            <div className="flex gap-5 overflow-x-auto border-b border-slate-200 text-xs font-bold">
               <button
                 onClick={() => setActiveTab('CARD')}
-                className={`pb-3 transition cursor-pointer flex items-center gap-1.5 ${
+                className={`flex flex-shrink-0 items-center gap-1.5 pb-3 transition cursor-pointer ${
                   activeTab === 'CARD'
                     ? 'border-b-2 border-[#0F2E22] text-[#0F2E22]'
                     : 'text-slate-400 hover:text-slate-700'
@@ -376,7 +376,7 @@ export default function CustomerPortalPage() {
 
               <button
                 onClick={() => setActiveTab('HISTORY')}
-                className={`pb-3 transition cursor-pointer flex items-center gap-1.5 ${
+                className={`flex flex-shrink-0 items-center gap-1.5 pb-3 transition cursor-pointer ${
                   activeTab === 'HISTORY'
                     ? 'border-b-2 border-[#0F2E22] text-[#0F2E22]'
                     : 'text-slate-400 hover:text-slate-700'
@@ -388,7 +388,7 @@ export default function CustomerPortalPage() {
 
               <button
                 onClick={() => setActiveTab('REWARDS')}
-                className={`pb-3 transition cursor-pointer flex items-center gap-1.5 ${
+                className={`flex flex-shrink-0 items-center gap-1.5 pb-3 transition cursor-pointer ${
                   activeTab === 'REWARDS'
                     ? 'border-b-2 border-[#0F2E22] text-[#0F2E22]'
                     : 'text-slate-400 hover:text-slate-700'
@@ -639,7 +639,7 @@ export default function CustomerPortalPage() {
       )}
 
       {/* Footer */}
-      <footer className="py-4 text-center text-[11px] text-slate-400 border-t border-slate-200 bg-white">
+      <footer className="border-t border-slate-200 bg-white px-4 py-5 text-center text-[11px] text-slate-400">
         TeaP Bubble Tea &bull; Hệ sinh thái trà sữa thân thiết & tiện lợi
       </footer>
     </div>

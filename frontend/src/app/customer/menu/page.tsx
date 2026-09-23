@@ -139,7 +139,7 @@ export default function CustomerMenuPage() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F8FAFC] font-sans text-slate-900">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#F8FAFC] font-sans text-slate-900">
       <header className="sticky top-0 z-30 bg-[#0F2E22] px-4 py-3.5 text-white shadow-sm sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -166,7 +166,7 @@ export default function CustomerMenuPage() {
               className="flex items-center gap-1.5 rounded-lg border border-white/20 px-3 py-2 text-emerald-100 transition hover:bg-white/10 hover:text-white"
             >
               <LogIn className="h-3.5 w-3.5" />
-              <span>Đăng nhập</span>
+              <span>Đăng nhập nhân viên</span>
             </Link>
           </nav>
         </div>
@@ -224,7 +224,7 @@ export default function CustomerMenuPage() {
               <RefreshCw className="h-3.5 w-3.5" /> Thử lại
             </button>
           </section>
-        ) : menu.drinks.length === 0 ? (
+        ) : menu.drinks.length === 0 && menu.toppings.length === 0 ? (
           <section className="rounded-3xl border border-slate-200 bg-white px-6 py-20 text-center shadow-sm">
             <Coffee className="mx-auto h-12 w-12 stroke-1 text-slate-300" />
             <h2 className="mt-4 text-base font-bold text-slate-700">Menu chưa có sản phẩm</h2>
@@ -232,39 +232,41 @@ export default function CustomerMenuPage() {
           </section>
         ) : (
           <>
-            <section aria-label="Bộ lọc danh mục" className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700">Danh mục</h2>
-                <span className="text-xs text-slate-400">{filteredDrinks.length} món</span>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveCategory('all')}
-                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
-                    activeCategory === 'all'
-                      ? 'border-[#0F2E22] bg-[#0F2E22] text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-700 hover:text-emerald-800'
-                  }`}
-                >
-                  Tất cả
-                </button>
-                {visibleCategories.map((category) => (
+            {menu.drinks.length > 0 && (
+              <section aria-label="Bộ lọc danh mục" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700">Danh mục</h2>
+                  <span className="text-xs text-slate-400">{filteredDrinks.length} món</span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
                   <button
-                    key={category.id}
                     type="button"
-                    onClick={() => setActiveCategory(category.id)}
+                    onClick={() => setActiveCategory('all')}
                     className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
-                      activeCategory === category.id
+                      activeCategory === 'all'
                         ? 'border-[#0F2E22] bg-[#0F2E22] text-white'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-700 hover:text-emerald-800'
                     }`}
                   >
-                    {category.name}
+                    Tất cả
                   </button>
-                ))}
-              </div>
-            </section>
+                  {visibleCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setActiveCategory(category.id)}
+                      className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+                        activeCategory === category.id
+                          ? 'border-[#0F2E22] bg-[#0F2E22] text-white'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-700 hover:text-emerald-800'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section aria-labelledby="drinks-heading" className="space-y-4">
               <div>
@@ -276,9 +278,17 @@ export default function CustomerMenuPage() {
 
               {filteredDrinks.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-                  <Search className="mx-auto h-10 w-10 text-slate-300" />
-                  <p className="mt-3 text-sm font-semibold text-slate-600">Không tìm thấy món phù hợp</p>
-                  <p className="mt-1 text-xs text-slate-400">Thử từ khóa hoặc danh mục khác.</p>
+                  {menu.drinks.length === 0 ? (
+                    <Coffee className="mx-auto h-10 w-10 text-slate-300" />
+                  ) : (
+                    <Search className="mx-auto h-10 w-10 text-slate-300" />
+                  )}
+                  <p className="mt-3 text-sm font-semibold text-slate-600">
+                    {menu.drinks.length === 0 ? 'Chưa có đồ uống trong menu' : 'Không tìm thấy món phù hợp'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {menu.drinks.length === 0 ? 'Các món mới sẽ được cập nhật tại đây.' : 'Thử từ khóa hoặc danh mục khác.'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
