@@ -41,6 +41,9 @@ coverage/
 .agent/
 .agents/
 
-# Prisma
-backend/prisma/migrations/**/migration_lock.toml
+# Archives & Caches
+*.rar
+*.zip
+__pycache__/
+Nhóm 1/
 
