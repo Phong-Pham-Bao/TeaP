@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { 
@@ -55,6 +55,8 @@ export default function PosPage() {
   // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
+  const orderListRef = useRef<HTMLDivElement>(null);
+  const [scrollTarget, setScrollTarget] = useState<{ cartId: string } | null>(null);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerInfo, setCustomerInfo] = useState<any>(null);
   const [activePromos, setActivePromos] = useState<any[]>([]);
@@ -70,40 +72,43 @@ export default function PosPage() {
     loadInitialData();
   }, []);
 
-  // Kiểm tra loại bỏ bánh ngọt & tráng miệng khỏi quầy POS
-  const isCake = (p: any) => {
-    const type = p.type?.toLowerCase() || '';
-    const name = p.name?.toLowerCase() || '';
-    const sku = p.sku?.toLowerCase() || '';
-    const catName = p.category?.name?.toLowerCase() || '';
-    return (
-      type.includes('cake') ||
-      name.includes('bánh') ||
-      name.includes('tart') ||
-      name.includes('croissant') ||
-      name.includes('mousse') ||
-      name.includes('tiramisu') ||
-      name.includes('su kem') ||
-      name.includes('red velvet') ||
+  const isDessertCategory = (name: string) =>
+    ['bánh', 'tráng miệng', 'cake', 'dessert'].some((term) => name.toLowerCase().includes(term));
+
+  const isDessertProduct = (product: Product) => {
+    if (product.type === 'TOPPING') return false;
+    const name = product.name.toLowerCase();
+    const sku = product.sku.toLowerCase();
+    const type = product.type.toLowerCase();
+    const dessertNames = ['bánh', 'cake', 'dessert', 'tart', 'croissant', 'mousse', 'tiramisu', 'su kem', 'red velvet'];
+
+    return type === 'cake' || type === 'dessert' ||
       sku.startsWith('cake') ||
-      catName.includes('bánh') ||
-      catName.includes('tráng miệng')
-    );
+      isDessertCategory(product.category?.name || '') ||
+      dessertNames.some((term) => name === term || name.startsWith(`${term} `));
   };
+
+  useLayoutEffect(() => {
+    if (!scrollTarget) return;
+    const container = orderListRef.current;
+    const item = document.getElementById(`cart-item-${scrollTarget.cartId}`);
+    if (!container || !item || !container.contains(item)) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    const padding = 8;
+    if (itemRect.height > container.clientHeight - padding * 2 || itemRect.top < containerRect.top + padding) {
+      container.scrollTo({ top: container.scrollTop + itemRect.top - containerRect.top - padding, behavior: 'smooth' });
+    } else if (itemRect.bottom > containerRect.bottom - padding) {
+      container.scrollTo({ top: container.scrollTop + itemRect.bottom - containerRect.bottom + padding, behavior: 'smooth' });
+    }
+  }, [scrollTarget]);
 
   const loadInitialData = async () => {
     try {
       // 1. Categories (loại bỏ danh mục bánh & tráng miệng)
       const catRes = await api.get('/categories');
-      const validCats = (catRes.data || []).filter((c: any) => {
-        const name = c.name?.toLowerCase() || '';
-        return (
-          !name.includes('bánh') && 
-          !name.includes('tráng miệng') && 
-          !name.includes('cake') && 
-          !name.includes('dessert')
-        );
-      });
+      const validCats = (catRes.data || []).filter((c: { name?: string }) => !isDessertCategory(c.name || ''));
       setCategories(validCats);
 
       // 2. Menu (lọc chỉ lấy đồ uống & topping, loại bỏ bánh)
@@ -111,7 +116,7 @@ export default function PosPage() {
       const menuData = menuRes.data;
 
       if (menuData && menuData.drinks) {
-        setProducts((menuData.drinks || []).filter((p: any) => !isCake(p)));
+        setProducts((menuData.drinks || []).filter((p: Product) => !isDessertProduct(p)));
         setToppings(menuData.toppings || []);
       } else if (Array.isArray(menuData)) {
         const allDrinks: any[] = [];
@@ -120,7 +125,7 @@ export default function PosPage() {
           (cat.products || []).forEach((p: any) => {
             if (p.type === 'TOPPING') {
               allToppings.push(p);
-            } else if (!isCake(p)) {
+            } else if (!isDessertProduct(p)) {
               allDrinks.push(p);
             }
           });
@@ -144,21 +149,14 @@ export default function PosPage() {
     }
   };
 
-  // KHI CHỌN SẢN PHẨM:
-  // - Nếu đã có trong order: mở thẳng chính món đó ra để sửa/chọn thêm, không cuộn đi cuộn lại!
-  // - Nếu chưa có: đưa lên đầu order để thấy ngay trước mắt!
+  // Mở đúng món trong order và chỉ cuộn vùng order nếu cần.
   const handleSelectProduct = (product: Product) => {
     const existingItemIndex = cart.findIndex((i) => i.product.id === product.id);
 
     if (existingItemIndex > -1) {
       const targetCartId = cart[existingItemIndex].cartId;
       setEditingCartId(targetCartId);
-      setTimeout(() => {
-        document.getElementById(`cart-item-${targetCartId}`)?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 50);
+      setScrollTarget({ cartId: targetCartId });
     } else {
       const defaultSize = product.sizes?.find((s) => s.name === 'M') || product.sizes?.[0] || null;
       const baseP = Number(product.basePrice);
@@ -181,13 +179,7 @@ export default function PosPage() {
       // Đưa lên đầu danh sách để thu ngân thấy ngay món đang chọn không cần cuộn!
       setCart((prev) => [newItem, ...prev]);
       setEditingCartId(newCartId);
-
-      setTimeout(() => {
-        document.getElementById(`cart-item-${newCartId}`)?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 50);
+      setScrollTarget({ cartId: newCartId });
     }
   };
 
@@ -320,7 +312,6 @@ export default function PosPage() {
   };
 
   const filteredProducts = products.filter((p) => {
-    if (isCake(p)) return false;
     const matchesCat = activeCategory === 'all' || p.categoryId === activeCategory;
     const matchesSearch = 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -540,15 +531,15 @@ export default function PosPage() {
       )}
 
       {/* Main Workspace (Chia đôi 5/5: 50% Sản phẩm, 50% Order) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* CỘT TRÁI (50%): PHÂN LOẠI CUỘN DỌC + GRID SẢN PHẨM */}
-        <div className="w-1/2 flex flex-row overflow-hidden border-r border-slate-200 bg-[#F8FAFC]">
+        <div className="w-1/2 min-h-0 flex flex-row overflow-hidden border-r border-slate-200 bg-[#F8FAFC]">
           {/* 1. Thanh phân loại cuộn dọc (Vertical Category Sidebar) */}
-          <div className="w-32 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
+          <div className="w-32 min-h-0 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div className="p-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50/50">
               Danh mục
             </div>
-            <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
+            <div className="flex-1 min-h-0 overflow-y-auto p-1.5 space-y-1">
               <button
                 type="button"
                 onClick={() => setActiveCategory('all')}
@@ -592,7 +583,7 @@ export default function PosPage() {
           </div>
 
           {/* 2. Ô tìm kiếm & Lưới sản phẩm đồ uống */}
-          <div className="flex-1 flex flex-col p-3 overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col p-3 overflow-hidden">
             {/* Search Input */}
             <div className="relative mb-2.5 flex-shrink-0">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -606,7 +597,7 @@ export default function PosPage() {
             </div>
 
             {/* Product Items Grid */}
-            <div className="flex-1 overflow-y-auto pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
               {filteredProducts.length === 0 ? (
                 <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs">
                   <Coffee className="w-8 h-8 text-slate-300 stroke-1 mb-2" />
@@ -649,7 +640,7 @@ export default function PosPage() {
         </div>
 
         {/* CỘT PHẢI (50%): BẢNG ORDER DÀI & RỘNG RÃI TOÀN MÀN HÌNH */}
-        <div className="w-1/2 bg-white flex flex-col h-full flex-shrink-0">
+        <div className="w-1/2 min-h-0 bg-white flex flex-col h-full flex-shrink-0">
           {/* 1. Header Order gọn gàng */}
           <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
             <div className="flex items-center gap-2 font-bold text-slate-900 text-xs tracking-tight">
@@ -722,8 +713,9 @@ export default function PosPage() {
 
           {/* 3. Danh Sách Món Order Dài & Rộng Rãi - Chiếm tối đa không gian */}
           <div 
+            ref={orderListRef}
             onClick={() => setEditingCartId(null)}
-            className="flex-1 overflow-y-auto p-3.5 space-y-2.5 cursor-default"
+            className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-2.5 cursor-default"
           >
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs gap-1.5 pointer-events-none">
