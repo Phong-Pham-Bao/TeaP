@@ -3,9 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Boxes, AlertTriangle, CheckCircle, RefreshCcw, ArrowUpDown } from 'lucide-react';
+import type { components } from '@/lib/api-contract.generated';
+
+type InventoryItem = components['schemas']['InventoryResponseDto'];
+type InventoryPage = {
+  data?: InventoryItem[];
+  meta?: { total?: number; page?: number; limit?: number; totalPages?: number };
+};
 
 export default function AdminInventoryPage() {
-  const [inventories, setInventories] = useState<any[]>([]);
+  const [inventories, setInventories] = useState<InventoryItem[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -35,7 +42,7 @@ export default function AdminInventoryPage() {
   const loadInventory = async (branchId: string) => {
     setLoading(true);
     try {
-      const res = await api.get(`/inventory?branchId=${branchId}`);
+      const res = await api.get<InventoryPage>(`/inventory?branchId=${branchId}`);
       setInventories(res.data.data || []);
     } catch (err) {
       console.error(err);

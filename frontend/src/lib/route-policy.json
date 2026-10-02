@@ -1,0 +1,42 @@
+{
+  "roles": [
+    "SUPER_ADMIN",
+    "MANAGER",
+    "HR",
+    "ACCOUNTANT",
+    "CASHIER",
+    "WAREHOUSE_STAFF",
+    "KITCHEN_STAFF"
+  ],
+  "defaultRoutes": {
+    "SUPER_ADMIN": "/admin",
+    "MANAGER": "/manager",
+    "HR": "/staff",
+    "ACCOUNTANT": "/accountant",
+    "CASHIER": "/pos",
+    "WAREHOUSE_STAFF": "/warehouse",
+    "KITCHEN_STAFF": "/kitchen"
+  },
+  "routes": [
+    { "path": "/", "match": "exact", "access": "authenticated" },
+    { "path": "/login", "match": "prefix", "access": "public" },
+    { "path": "/customer", "match": "prefix", "access": "public" },
+    { "path": "/admin", "match": "prefix", "roles": ["SUPER_ADMIN"] },
+    { "path": "/manager", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER"] },
+    { "path": "/staff", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "HR"] },
+    { "path": "/hr", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "HR"] },
+    { "path": "/accountant", "match": "prefix", "roles": ["SUPER_ADMIN", "ACCOUNTANT"] },
+    { "path": "/pos", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "CASHIER"] },
+    { "path": "/warehouse", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "WAREHOUSE_STAFF"] },
+    { "path": "/kitchen", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "KITCHEN_STAFF"] },
+    { "path": "/order-history", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "CASHIER", "ACCOUNTANT"] },
+    { "path": "/shift-close", "match": "prefix", "roles": ["SUPER_ADMIN", "MANAGER", "CASHIER"] }
+  ],
+  "allowedStaticNavigation": {
+    "/admin": ["/admin", "/admin/branches", "/admin/users", "/admin/products", "/admin/inventory"],
+    "/customer": ["/customer/menu", "/login"],
+    "/customer/menu": ["/customer", "/login"],
+    "/login": ["/customer/menu"],
+    "/pos": ["/order-history"]
+  }
+}

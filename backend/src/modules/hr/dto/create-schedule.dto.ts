@@ -1,5 +1,6 @@
-import { IsUUID, IsDateString, IsString } from 'class-validator';
+import { IsUUID, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBusinessDate } from '../../../common/validation/is-business-date.decorator';
 
 export class CreateScheduleDto {
   @ApiProperty()
@@ -11,7 +12,7 @@ export class CreateScheduleDto {
   branchId: string;
 
   @ApiProperty()
-  @IsDateString()
+  @IsBusinessDate()
   date: string;
 
   @ApiProperty()

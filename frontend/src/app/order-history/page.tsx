@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { isRoleAllowed, ROLE_DEFAULT_ROUTES, useAuth } from '@/lib/auth-context';
+import { useUrlEnumState } from '@/lib/use-url-enum-state';
 import { 
   History, Search, Printer, Ban, ArrowLeft, 
   Calendar, CheckCircle2, XCircle, Clock, RefreshCcw, 
@@ -10,13 +11,27 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+const ADJUSTMENTS_ENABLED = false;
+const ORDER_STATUSES = ['ALL', 'PAID', 'CANCELLED', 'PENDING'] as const;
+type OrderStatusFilter = (typeof ORDER_STATUSES)[number];
+
 export default function OrderHistoryPage() {
   const { user } = useAuth();
+  const returnHref = user && isRoleAllowed(user.role, '/pos')
+    ? '/pos'
+    : user
+      ? ROLE_DEFAULT_ROUTES[user.role]
+      : '/login';
+  const returnLabel = returnHref === '/pos' ? 'Về quầy bán hàng' : 'Về trang làm việc';
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useUrlEnumState<OrderStatusFilter>(
+    'status',
+    'ALL',
+    ORDER_STATUSES,
+  );
 
   // Modal chi tiết & In bill
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -37,7 +52,7 @@ export default function OrderHistoryPage() {
 
   useEffect(() => {
     loadOrders();
-    loadProducts();
+    if (ADJUSTMENTS_ENABLED) loadProducts();
   }, [statusFilter]);
 
   const loadProducts = async () => {
@@ -141,24 +156,26 @@ export default function OrderHistoryPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
-              href="/pos"
+              href={returnHref}
               className="p-2 bg-emerald-800 hover:bg-emerald-700 rounded-xl text-emerald-200 transition"
-              title="Về máy POS"
+              title={returnLabel}
+              aria-label={returnLabel}
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <h1 className="text-lg font-bold flex items-center gap-2">
                 <History className="w-5 h-5 text-emerald-300" />
-                Lịch Sử Hóa Đơn & Đối Soát Bán Hàng
+                Lịch sử hóa đơn bán hàng
               </h1>
               <p className="text-xs text-emerald-300">
-                Tra cứu danh sách hóa đơn cũ, xem chi tiết số tiền từng mục, in lại hóa đơn hoặc hủy/hoàn đơn
+                Tra cứu và xem chi tiết dữ liệu đơn hàng đã lưu trên hệ thống
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={loadOrders}
             className="p-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl transition flex items-center gap-2 text-xs font-semibold"
           >
@@ -170,6 +187,11 @@ export default function OrderHistoryPage() {
 
       {/* Main Content */}
       <main className="max-w-6xl w-full mx-auto p-6 flex-1 space-y-6">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+          Hoàn tiền, hủy đơn đã thanh toán và bù món đang bị khóa cho tới khi POS-04 có reversal,
+          giới hạn hoàn, phê duyệt và audit đầy đủ. Trang này hiện chỉ cho phép tra cứu dữ liệu thật.
+        </div>
+
         {/* Filter Bar */}
         <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-80">
@@ -178,16 +200,18 @@ export default function OrderHistoryPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm mã đơn (ORD-...), SĐT khách..."
+              placeholder="Tìm mã đơn (ORD-…), SĐT khách…"
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600"
             />
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1">
-            {['ALL', 'PAID', 'CANCELLED', 'PENDING'].map((st) => (
+            {ORDER_STATUSES.map((st) => (
               <button
+                type="button"
                 key={st}
                 onClick={() => setStatusFilter(st)}
+                aria-pressed={statusFilter === st}
                 className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
                   statusFilter === st
                     ? 'bg-emerald-800 text-white shadow-md'
@@ -277,7 +301,7 @@ export default function OrderHistoryPage() {
                           <Eye className="w-3.5 h-3.5" />
                         </button>
 
-                        {ord.status === 'PAID' && (
+                        {ADJUSTMENTS_ENABLED && ord.status === 'PAID' && (
                           <>
                             <button
                               onClick={() => {

@@ -1,11 +1,17 @@
 import { Controller, Get, Put, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { RecipesService } from './recipes.service';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { PERMISSIONS } from '../../common/auth/permission-matrix';
+import { RecipeItemResponseDto } from './dto/recipe-response.dto';
 
 @ApiTags('Recipes')
 @ApiBearerAuth('JWT-auth')
@@ -15,15 +21,17 @@ export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
   @Get(':drinkId')
-  @Roles(Role.SUPER_ADMIN, Role.MANAGER, Role.WAREHOUSE_STAFF)
+  @RequirePermissions(PERMISSIONS.RECIPE_READ)
   @ApiOperation({ summary: 'Get recipe for a specific drink' })
+  @ApiOkResponse({ type: [RecipeItemResponseDto] })
   getRecipe(@Param('drinkId') drinkId: string) {
     return this.recipesService.getRecipe(drinkId);
   }
 
   @Put(':drinkId')
-  @Roles(Role.SUPER_ADMIN, Role.MANAGER)
+  @RequirePermissions(PERMISSIONS.RECIPE_WRITE)
   @ApiOperation({ summary: 'Set or update recipe for a specific drink' })
+  @ApiOkResponse({ type: [RecipeItemResponseDto] })
   setRecipe(
     @Param('drinkId') drinkId: string,
     @Body() updateRecipeDto: UpdateRecipeDto,

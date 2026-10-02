@@ -2,14 +2,21 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { QueryAttendanceDto } from '../dto/query-attendance.dto';
 import { CheckInDto } from '../dto/check-in.dto';
+import { Prisma } from '@prisma/client';
+import { paginate } from '../../../common/dto/pagination.dto';
+import {
+  businessDateColumnRange,
+  businessDateValue,
+  businessMonthDateRange,
+} from '../../../common/time/business-time';
+import { toAttendanceResponse } from '../dto/hr-response.dto';
 
 @Injectable()
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async checkIn(userId: string, dto?: CheckInDto) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = businessDateValue();
 
     const existing = await this.prisma.attendance.findUnique({
       where: {
@@ -24,16 +31,17 @@ export class AttendanceService {
       if (existing.checkIn) {
         throw new BadRequestException('Already checked in today');
       }
-      return this.prisma.attendance.update({
+      const attendance = await this.prisma.attendance.update({
         where: { id: existing.id },
         data: {
           checkIn: new Date(),
           note: dto?.note || existing.note,
         },
       });
+      return toAttendanceResponse(attendance);
     }
 
-    return this.prisma.attendance.create({
+    const attendance = await this.prisma.attendance.create({
       data: {
         userId,
         date: today,
@@ -41,11 +49,11 @@ export class AttendanceService {
         note: dto?.note,
       },
     });
+    return toAttendanceResponse(attendance);
   }
 
   async checkOut(userId: string, dto?: CheckInDto) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = businessDateValue();
 
     const existing = await this.prisma.attendance.findUnique({
       where: {
@@ -68,7 +76,7 @@ export class AttendanceService {
     const msDiff = checkOut.getTime() - existing.checkIn.getTime();
     const hoursWorked = msDiff / (1000 * 60 * 60);
 
-    return this.prisma.attendance.update({
+    const attendance = await this.prisma.attendance.update({
       where: { id: existing.id },
       data: {
         checkOut,
@@ -76,20 +84,19 @@ export class AttendanceService {
         note: dto?.note ? `${existing.note || ''} | ${dto.note}` : existing.note,
       },
     });
+    return toAttendanceResponse(attendance);
   }
 
   async findAll(query: QueryAttendanceDto) {
     const { skip, take, userId, startDate, endDate, branchId } = query;
-    const where: any = {};
+    const where: Prisma.AttendanceWhereInput = {};
 
     if (userId) {
       where.userId = userId;
     }
 
     if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) where.date.lte = new Date(endDate);
+      where.date = businessDateColumnRange(startDate, endDate);
     }
 
     if (branchId) {
@@ -107,24 +114,25 @@ export class AttendanceService {
       this.prisma.attendance.count({ where }),
     ]);
 
-    return { data, total, page: query.page, limit: query.limit };
+    return paginate(
+      data.map(toAttendanceResponse),
+      total,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
   }
 
   async getMyAttendance(userId: string, month?: number, year?: number) {
-    const where: any = { userId };
+    const where: Prisma.AttendanceWhereInput = { userId };
     
     if (month && year) {
-       const start = new Date(year, month - 1, 1);
-       const end = new Date(year, month, 0);
-       where.date = {
-          gte: start,
-          lte: end
-       }
+       where.date = businessMonthDateRange(month, year);
     }
 
-    return this.prisma.attendance.findMany({
+    const records = await this.prisma.attendance.findMany({
       where,
       orderBy: { date: 'desc' },
     });
+    return records.map(toAttendanceResponse);
   }
 }

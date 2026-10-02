@@ -1,6 +1,5 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BullModule } from '@nestjs/bull';
 import { APP_GUARD } from '@nestjs/core';
 
 // Core modules
@@ -24,6 +23,8 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { HrModule } from './modules/hr/hr.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { PlatformModule } from './modules/platform/platform.module';
 
 @Module({
   imports: [
@@ -33,16 +34,9 @@ import { ReportsModule } from './modules/reports/reports.module';
       envFilePath: '.env',
     }),
 
-    // Bull Queue (Redis-based)
-    BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      },
-    }),
-
     // Core
     PrismaModule,
+    PlatformModule,
 
     // Feature modules
     AuthModule,
@@ -66,11 +60,16 @@ import { ReportsModule } from './modules/reports/reports.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    // Global Roles guard — checks @Roles() decorator
+    // Global access guard — checks centralized permissions, legacy roles and
+    // explicit authenticated/public access policies, failing closed otherwise.
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

@@ -3,6 +3,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionType } from '@prisma/client';
+import {
+  minVnd,
+  percentageOfVnd,
+  vnd,
+  vndToNumber,
+} from '../../common/money/vietnamese-dong';
 
 @Injectable()
 export class PromotionsService {
@@ -85,36 +91,34 @@ export class PromotionsService {
   async validateAndCalculateDiscount(promotionId: string, subtotal: number): Promise<number> {
     const promotion = await this.findOne(promotionId);
     const now = new Date();
+    const normalizedSubtotal = vnd(subtotal);
 
     if (!promotion.isActive || now < promotion.startDate || now > promotion.endDate) {
       throw new BadRequestException('Khuyến mãi không hợp lệ hoặc đã hết hạn.');
     }
 
-    if (promotion.minOrderValue && subtotal < Number(promotion.minOrderValue)) {
+    if (promotion.minOrderValue && normalizedSubtotal.lt(promotion.minOrderValue)) {
       throw new BadRequestException(`Đơn hàng phải từ ${promotion.minOrderValue} để áp dụng khuyến mãi này.`);
     }
 
-    let discount = 0;
-    const value = Number(promotion.value);
+    let discount = vnd(0);
 
     switch (promotion.type) {
       case PromotionType.PERCENTAGE:
-        discount = subtotal * (value / 100);
-        if (promotion.maxDiscount && discount > Number(promotion.maxDiscount)) {
-          discount = Number(promotion.maxDiscount);
+        discount = percentageOfVnd(normalizedSubtotal, promotion.value);
+        if (promotion.maxDiscount && discount.gt(promotion.maxDiscount)) {
+          discount = vnd(promotion.maxDiscount);
         }
         break;
       case PromotionType.FIXED_AMOUNT:
-        discount = value;
+        discount = vnd(promotion.value);
         break;
       case PromotionType.BUY_X_GET_Y:
-        // Logic for BUY_X_GET_Y requires checking items which is complex to do purely on subtotal.
-        // Returning 0 or handling it in POS service is typical. We return fixed value or 0 here.
-        // You would typically handle this inside the POS order items loop.
-        discount = value;
-        break;
+        throw new BadRequestException(
+          'BUY_X_GET_Y requires item-level pricing and is not supported by this endpoint.',
+        );
     }
 
-    return discount > subtotal ? subtotal : discount;
+    return vndToNumber(minVnd(discount, normalizedSubtotal));
   }
 }

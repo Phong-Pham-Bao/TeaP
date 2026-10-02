@@ -1,5 +1,6 @@
-import { IsOptional, IsUUID, IsDateString } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBusinessDate } from '../../../common/validation/is-business-date.decorator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class QueryScheduleDto extends PaginationDto {
@@ -15,11 +16,11 @@ export class QueryScheduleDto extends PaginationDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   startDate?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   endDate?: string;
 }

@@ -3,17 +3,169 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+  --tea-950: #123126;
+  --tea-900: #173e2e;
+  --tea-700: #2f6f52;
+  --tea-600: #3e8061;
+  --milk: #f7f8f5;
+  --paper: #ffffff;
+  --ink: #17211c;
+  --muted: #607068;
+  --line: #dfe6e1;
+  --warning: #b7791f;
+  --danger: #c2414d;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--milk);
+  scroll-behavior: smooth;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: #F8F9FA;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-width: 320px;
+  color: var(--ink);
+  background: var(--milk);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: "kern" 1, "tnum" 1;
+  text-rendering: optimizeLegibility;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: rgba(47, 111, 82, 0.14);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(62, 128, 97, 0.32);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border-radius: 0.5rem;
+  background: var(--tea-950);
+  color: white;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--milk);
+}
+
+.app-sidebar {
+  width: 16rem;
+  flex: 0 0 16rem;
+  background: var(--tea-950);
+  color: white;
+}
+
+.app-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.surface {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--paper);
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1023px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    position: relative;
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .app-sidebar nav {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0.75rem;
+    scrollbar-width: none;
+  }
+
+  .app-sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-sidebar nav > button,
+  .app-sidebar nav > a {
+    width: auto;
+    min-width: max-content;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../prisma/prisma.module';
 import { AttendanceService } from './services/attendance.service';
 import { ScheduleService } from './services/schedule.service';
 import { SalaryService } from './services/salary.service';
@@ -10,7 +9,6 @@ import { SalaryController } from './controllers/salary.controller';
 import { AnnouncementController } from './controllers/announcement.controller';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [
     AttendanceController,
     ScheduleController,

@@ -16,6 +16,9 @@ class UserProfileDto {
 
   @ApiProperty({ required: false })
   branchId?: string;
+
+  @ApiProperty({ type: [String] })
+  allowedBranchIds: string[];
 }
 
 export class TokenResponseDto {
@@ -23,7 +26,7 @@ export class TokenResponseDto {
   accessToken: string;
 
   @ApiProperty()
-  refreshToken: string;
+  csrfToken: string;
 
   @ApiProperty({ type: () => UserProfileDto })
   user: UserProfileDto;

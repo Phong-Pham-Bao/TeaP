@@ -2,31 +2,40 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCashFlowDto } from './dto/create-cash-flow.dto';
 import { QueryCashFlowDto } from './dto/query-cash-flow.dto';
-import { CashFlowType } from '@prisma/client';
+import { CashFlowType, Prisma } from '@prisma/client';
+import { paginate } from '../../common/dto/pagination.dto';
+import { businessDateKey, businessTimestampRange } from '../../common/time/business-time';
+import {
+  addVnd,
+  subtractVnd,
+  vnd,
+  vndToNumber,
+} from '../../common/money/vietnamese-dong';
+import { toCashFlowResponse } from './dto/cash-flow-response.dto';
 
 @Injectable()
 export class FinanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createCashFlowDto: CreateCashFlowDto, userId: string) {
-    return this.prisma.cashFlow.create({
+    const cashFlow = await this.prisma.cashFlow.create({
       data: {
         ...createCashFlowDto,
+        amount: vnd(createCashFlowDto.amount),
         createdBy: userId,
       },
     });
+    return toCashFlowResponse(cashFlow);
   }
 
   async findAll(query: QueryCashFlowDto) {
     const { skip, take, branchId, type, startDate, endDate } = query;
-    const where: any = {};
+    const where: Prisma.CashFlowWhereInput = {};
 
     if (branchId) where.branchId = branchId;
     if (type) where.type = type;
     if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
+      where.createdAt = businessTimestampRange(startDate, endDate);
     }
 
     const [data, total] = await Promise.all([
@@ -44,16 +53,19 @@ export class FinanceService {
       this.prisma.cashFlow.count({ where }),
     ]);
 
-    return { data, total, page: query.page, limit: query.limit };
+    return paginate(
+      data.map(toCashFlowResponse),
+      total,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
   }
 
   async getSummary(branchId?: string, startDate?: string, endDate?: string) {
-    const where: any = {};
+    const where: Prisma.CashFlowWhereInput = {};
     if (branchId) where.branchId = branchId;
     if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
+      where.createdAt = businessTimestampRange(startDate, endDate);
     }
 
     const cashFlows = await this.prisma.cashFlow.findMany({
@@ -65,32 +77,49 @@ export class FinanceService {
       },
     });
 
-    let totalIncome = 0;
-    let totalExpense = 0;
-    const groupedByDate: Record<string, { income: number; expense: number }> = {};
+    let totalIncome = vnd(0);
+    let totalExpense = vnd(0);
+    const groupedByDate: Record<
+      string,
+      { income: Prisma.Decimal; expense: Prisma.Decimal }
+    > = {};
 
-    cashFlows.forEach((cf: any) => {
-      const amount = Number(cf.amount);
-      const dateStr = cf.createdAt.toISOString().split('T')[0];
+    cashFlows.forEach((cf) => {
+      const amount = vnd(cf.amount);
+      const dateStr = businessDateKey(cf.createdAt);
 
       if (!groupedByDate[dateStr]) {
-        groupedByDate[dateStr] = { income: 0, expense: 0 };
+        groupedByDate[dateStr] = { income: vnd(0), expense: vnd(0) };
       }
 
       if (cf.type === CashFlowType.INCOME) {
-        totalIncome += amount;
-        groupedByDate[dateStr].income += amount;
+        totalIncome = addVnd(totalIncome, amount);
+        groupedByDate[dateStr].income = addVnd(
+          groupedByDate[dateStr].income,
+          amount,
+        );
       } else {
-        totalExpense += amount;
-        groupedByDate[dateStr].expense += amount;
+        totalExpense = addVnd(totalExpense, amount);
+        groupedByDate[dateStr].expense = addVnd(
+          groupedByDate[dateStr].expense,
+          amount,
+        );
       }
     });
 
     return {
-      totalIncome,
-      totalExpense,
-      netProfit: totalIncome - totalExpense,
-      groupedByDate,
+      totalIncome: vndToNumber(totalIncome),
+      totalExpense: vndToNumber(totalExpense),
+      netCashFlow: vndToNumber(subtractVnd(totalIncome, totalExpense)),
+      groupedByDate: Object.fromEntries(
+        Object.entries(groupedByDate).map(([date, amounts]) => [
+          date,
+          {
+            income: vndToNumber(amounts.income),
+            expense: vndToNumber(amounts.expense),
+          },
+        ]),
+      ),
     };
   }
 }

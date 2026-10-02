@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { PromotionType } from '@prisma/client';
+import { VND_MAX_AMOUNT } from '../../../common/money/vietnamese-dong';
 
 export class CreatePromotionDto {
   @ApiProperty({ description: 'Name of the promotion' })
@@ -18,20 +19,32 @@ export class CreatePromotionDto {
   type: PromotionType;
 
   @ApiProperty({ description: 'Discount value (percentage or fixed amount)' })
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   value: number;
 
-  @ApiPropertyOptional({ description: 'Minimum order value required for promotion' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 0,
+    maximum: VND_MAX_AMOUNT,
+    description: 'Minimum order value required for promotion',
+  })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
+  @Max(VND_MAX_AMOUNT)
   minOrderValue?: number;
 
-  @ApiPropertyOptional({ description: 'Maximum discount amount allowed' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 0,
+    maximum: VND_MAX_AMOUNT,
+    description: 'Maximum discount amount allowed',
+  })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
+  @Max(VND_MAX_AMOUNT)
   maxDiscount?: number;
 
   @ApiProperty({ description: 'Start date of the promotion' })

@@ -1,7 +1,8 @@
-import { IsOptional, IsUUID, IsEnum, IsDateString, IsString } from 'class-validator';
+import { IsOptional, IsUUID, IsEnum, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '@prisma/client';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { IsBusinessDate } from '../../../common/validation/is-business-date.decorator';
 
 export class QueryOrderDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Filter by Branch ID' })
@@ -16,12 +17,12 @@ export class QueryOrderDto extends PaginationDto {
 
   @ApiPropertyOptional({ description: 'Filter by Start Date (ISO string)' })
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   startDate?: string;
 
   @ApiPropertyOptional({ description: 'Filter by End Date (ISO string)' })
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   endDate?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Cashier ID' })

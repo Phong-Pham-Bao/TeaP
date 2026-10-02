@@ -1,5 +1,6 @@
-import { IsOptional, IsUUID, IsDateString, IsEnum } from 'class-validator';
+import { IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBusinessDate } from '../../../common/validation/is-business-date.decorator';
 
 export enum GroupByTime {
   DAY = 'day',
@@ -13,14 +14,14 @@ export class ReportQueryDto {
   @IsUUID()
   branchId?: string;
 
-  @ApiPropertyOptional({ description: 'Start Date (ISO 8601)' })
+  @ApiPropertyOptional({ description: 'Start business date (YYYY-MM-DD)' })
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'End Date (ISO 8601)' })
+  @ApiPropertyOptional({ description: 'End business date, inclusive (YYYY-MM-DD)' })
   @IsOptional()
-  @IsDateString()
+  @IsBusinessDate()
   endDate?: string;
 
   @ApiPropertyOptional({ enum: GroupByTime, default: GroupByTime.DAY })

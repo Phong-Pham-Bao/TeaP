@@ -1,28 +1,21 @@
 # Dependencies
 node_modules/
-**/node_modules/
 dist/
-**/dist/
-.next/
-**/.next/
-out/
-**/out/
 .pnp
 .pnp.js
 
-# Environment & Secrets
+# Environment
 .env
-.env.*
-*.env
-*.env.local
-**/.env
-**/.env.*
+.env.local
+.env.*.local
 
-# IDE & OS
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# OS
 .DS_Store
 Thumbs.db
 
@@ -31,19 +24,12 @@ logs/
 *.log
 npm-debug.log*
 
-# Build & Cache
+# Build
 build/
-coverage/
+**/.next/
 *.tsbuildinfo
-**/*.tsbuildinfo
+coverage/
 
-# AI & Agent artifacts
-.agent/
-.agents/
-
-# Archives & Caches
-*.rar
-*.zip
-__pycache__/
-Nhóm 1/
-
+# Prisma
+backend/prisma/migrations/**/migration_lock.toml
+!backend/prisma/migrations/migration_lock.toml

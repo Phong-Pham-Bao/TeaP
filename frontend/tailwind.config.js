@@ -9,13 +9,13 @@ module.exports = {
     extend: {
       colors: {
         teap: {
-          dark: '#1B4332',
-          DEFAULT: '#2D6A4F',
-          light: '#40916C',
-          cream: '#F4F1DE',
-          sand: '#E9D8A6',
-          coral: '#E76F51',
-          gold: '#EE9B00',
+          dark: '#123126',
+          DEFAULT: '#2F6F52',
+          light: '#3E8061',
+          cream: '#F7F8F5',
+          sand: '#DFE6E1',
+          coral: '#C2414D',
+          gold: '#B7791F',
         },
       },
     },

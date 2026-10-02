@@ -1,4 +1,4 @@
-import { IsUUID, IsInt, Min, IsOptional, ValidateNested, IsArray, IsObject, IsNumber, Max, IsString } from 'class-validator';
+import { IsUUID, IsInt, Min, IsOptional, ValidateNested, IsArray, IsObject, Max, IsString, MaxLength, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -22,6 +22,12 @@ class AttributesDto {
   @IsArray()
   @IsUUID('4', { each: true })
   toppings?: string[];
+
+  @ApiPropertyOptional({ description: 'Preparation note for this item' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
 }
 
 export class CreateOrderItemDto {
@@ -64,6 +70,7 @@ export class CreateOrderDto {
 
   @ApiProperty({ description: 'Order items', type: [CreateOrderItemDto] })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
@@ -71,5 +78,6 @@ export class CreateOrderDto {
   @ApiPropertyOptional({ description: 'Note for the order' })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   note?: string;
 }

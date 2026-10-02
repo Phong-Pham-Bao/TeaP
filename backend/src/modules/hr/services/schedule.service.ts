@@ -2,17 +2,29 @@ import { Injectable, ConflictException, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateScheduleDto } from '../dto/create-schedule.dto';
 import { QueryScheduleDto } from '../dto/query-schedule.dto';
+import { AuthenticatedActor } from '../../../common/types/authenticated-actor';
+import { assertBranchScope } from '../../../common/auth/branch-scope';
+import { Prisma, Role } from '@prisma/client';
+import { paginate } from '../../../common/dto/pagination.dto';
+import { businessDateColumn, businessDateColumnRange } from '../../../common/time/business-time';
 
 @Injectable()
 export class ScheduleService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateScheduleDto) {
+    const employee = await this.prisma.user.findFirst({
+      where: { id: dto.userId, isActive: true },
+      select: { branchId: true },
+    });
+    if (!employee || employee.branchId !== dto.branchId) {
+      throw new ConflictException('Employee is not assigned to the schedule branch');
+    }
     const existing = await this.prisma.workSchedule.findUnique({
       where: {
         userId_date_shiftName: {
           userId: dto.userId,
-          date: new Date(dto.date),
+          date: businessDateColumn(dto.date),
           shiftName: dto.shiftName,
         }
       }
@@ -26,7 +38,7 @@ export class ScheduleService {
       data: {
         userId: dto.userId,
         branchId: dto.branchId,
-        date: new Date(dto.date),
+        date: businessDateColumn(dto.date),
         shiftName: dto.shiftName,
         startTime: dto.startTime,
         endTime: dto.endTime,
@@ -49,14 +61,12 @@ export class ScheduleService {
 
   async findAll(query: QueryScheduleDto) {
     const { skip, take, userId, branchId, startDate, endDate } = query;
-    const where: any = {};
+    const where: Prisma.WorkScheduleWhereInput = {};
 
     if (userId) where.userId = userId;
     if (branchId) where.branchId = branchId;
     if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) where.date.lte = new Date(endDate);
+      where.date = businessDateColumnRange(startDate, endDate);
     }
 
     const [data, total] = await Promise.all([
@@ -73,15 +83,13 @@ export class ScheduleService {
       this.prisma.workSchedule.count({ where }),
     ]);
 
-    return { data, total, page: query.page, limit: query.limit };
+    return paginate(data, total, query.page ?? 1, query.limit ?? 20);
   }
 
   async getMySchedule(userId: string, startDate?: string, endDate?: string) {
-    const where: any = { userId };
+    const where: Prisma.WorkScheduleWhereInput = { userId };
     if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate);
-      if (endDate) where.date.lte = new Date(endDate);
+      where.date = businessDateColumnRange(startDate, endDate);
     }
 
     return this.prisma.workSchedule.findMany({
@@ -93,9 +101,10 @@ export class ScheduleService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, actor: AuthenticatedActor) {
     const schedule = await this.prisma.workSchedule.findUnique({ where: { id } });
     if (!schedule) throw new NotFoundException('Schedule not found');
+    assertBranchScope(actor, schedule.branchId, [Role.SUPER_ADMIN, Role.HR]);
     return this.prisma.workSchedule.delete({ where: { id } });
   }
 }

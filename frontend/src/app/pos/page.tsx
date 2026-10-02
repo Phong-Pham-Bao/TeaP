@@ -1,34 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import React, { useState, useEffect, useRef } from 'react';
+import { ROLE_DEFAULT_ROUTES, useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { 
   Coffee, ShoppingCart, Trash2, Plus, Minus, Check, 
-  Search, Tag, User, CreditCard, DollarSign, QrCode, 
+  Search, Tag, User, DollarSign,
   Receipt, CheckCircle, Store, LogOut, LayoutDashboard,
   Menu, Calculator, ChefHat, History, X, ChevronRight,
   Edit3, MessageSquare, ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  addVnd,
+  formatVnd,
+  multiplyVnd,
+  parseVnd,
+  percentageOfVnd,
+} from '@/lib/money';
+import type { components } from '@/lib/api-contract.generated';
 
-interface ProductSize {
-  id: string;
-  name: string;
-  priceAdj: string | number;
-}
-
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  type: string;
-  basePrice: string | number;
-  image?: string;
-  categoryId?: string;
-  category?: { name: string };
-  sizes: ProductSize[];
-}
+type CreateOrderRequest = components['schemas']['CreateOrderDto'];
+type CheckoutRequest = components['schemas']['CheckoutDto'];
+type OrderResponse = components['schemas']['OrderResponseDto'];
+type ProductSize = components['schemas']['ProductSizeResponseDto'];
+type Product = components['schemas']['ProductResponseDto'];
+type MenuResponse = components['schemas']['MenuResponseDto'];
+type CategoryResponse = components['schemas']['CategoryResponseDto'];
 
 interface CartItem {
   cartId: string;
@@ -42,9 +40,19 @@ interface CartItem {
   note: string;
 }
 
+type CheckoutReceiptView = OrderResponse & {
+  cartItems: CartItem[];
+  discountAmount: number;
+  finalTotal: number;
+  customer?: unknown;
+  branch?: { name?: string };
+};
+
 export default function PosPage() {
   const { user, logout } = useAuth();
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const workspaceHref = user ? ROLE_DEFAULT_ROUTES[user.role] : '/login';
+  const hasSeparateWorkspace = workspaceHref !== '/pos';
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [toppings, setToppings] = useState<Product[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -62,16 +70,21 @@ export default function PosPage() {
   const [showSideMenu, setShowSideMenu] = useState<boolean>(false);
 
   // Checkout Success Modal
-  const [checkedOutOrder, setCheckedOutOrder] = useState<any>(null);
+  const [checkedOutOrder, setCheckedOutOrder] = useState<CheckoutReceiptView | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'MOMO' | 'VNPAY'>('CASH');
+  const [paymentMethod, setPaymentMethod] = useState<'CASH'>('CASH');
+  const checkoutAttemptRef = useRef<{
+    fingerprint: string;
+    key: string;
+    orderId?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
   // Kiểm tra loại bỏ bánh ngọt & tráng miệng khỏi quầy POS
-  const isCake = (p: any) => {
+  const isCake = (p: Product) => {
     const type = p.type?.toLowerCase() || '';
     const name = p.name?.toLowerCase() || '';
     const sku = p.sku?.toLowerCase() || '';
@@ -94,8 +107,8 @@ export default function PosPage() {
   const loadInitialData = async () => {
     try {
       // 1. Categories (loại bỏ danh mục bánh & tráng miệng)
-      const catRes = await api.get('/categories');
-      const validCats = (catRes.data || []).filter((c: any) => {
+      const catRes = await api.get<CategoryResponse[]>('/categories');
+      const validCats = (catRes.data || []).filter((c) => {
         const name = c.name?.toLowerCase() || '';
         return (
           !name.includes('bánh') && 
@@ -107,27 +120,11 @@ export default function PosPage() {
       setCategories(validCats);
 
       // 2. Menu (lọc chỉ lấy đồ uống & topping, loại bỏ bánh)
-      const menuRes = await api.get('/products/menu');
+      const menuRes = await api.get<MenuResponse>('/products/menu');
       const menuData = menuRes.data;
 
-      if (menuData && menuData.drinks) {
-        setProducts((menuData.drinks || []).filter((p: any) => !isCake(p)));
-        setToppings(menuData.toppings || []);
-      } else if (Array.isArray(menuData)) {
-        const allDrinks: any[] = [];
-        const allToppings: any[] = [];
-        menuData.forEach((cat: any) => {
-          (cat.products || []).forEach((p: any) => {
-            if (p.type === 'TOPPING') {
-              allToppings.push(p);
-            } else if (!isCake(p)) {
-              allDrinks.push(p);
-            }
-          });
-        });
-        setProducts(allDrinks);
-        setToppings(allToppings);
-      }
+      setProducts(menuData.drinks.filter((product) => !isCake(product)));
+      setToppings(menuData.toppings);
 
       // 3. Branches
       const branchRes = await api.get('/branches');
@@ -138,7 +135,12 @@ export default function PosPage() {
 
       // 4. Promotions
       const promoRes = await api.get('/promotions/active');
-      setActivePromos(promoRes.data || []);
+      setActivePromos(
+        (promoRes.data || []).filter(
+          (promotion: { type?: string }) =>
+            promotion.type === 'PERCENTAGE' || promotion.type === 'FIXED_AMOUNT',
+        ),
+      );
     } catch (err) {
       console.error('Lỗi nạp dữ liệu POS:', err);
     }
@@ -161,11 +163,11 @@ export default function PosPage() {
       }, 50);
     } else {
       const defaultSize = product.sizes?.find((s) => s.name === 'M') || product.sizes?.[0] || null;
-      const baseP = Number(product.basePrice);
-      const sizeP = defaultSize ? Number(defaultSize.priceAdj) : 0;
-      const unitPrice = baseP + sizeP;
+      const baseP = parseVnd(product.basePrice);
+      const sizeP = defaultSize ? parseVnd(defaultSize.priceAdj) : 0;
+      const unitPrice = addVnd(baseP, sizeP);
 
-      const newCartId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const newCartId = `item-${crypto.randomUUID()}`;
       const newItem: CartItem = {
         cartId: newCartId,
         product,
@@ -199,10 +201,12 @@ export default function PosPage() {
         const changes = updater(item);
         const updated = { ...item, ...changes };
 
-        const baseP = Number(updated.product.basePrice);
-        const sizeP = updated.size ? Number(updated.size.priceAdj) : 0;
-        const toppingTotal = updated.selectedToppings.reduce((acc, t) => acc + Number(t.basePrice), 0);
-        updated.unitPrice = baseP + sizeP + toppingTotal;
+        const baseP = parseVnd(updated.product.basePrice);
+        const sizeP = updated.size ? parseVnd(updated.size.priceAdj) : 0;
+        const toppingTotal = addVnd(
+          ...updated.selectedToppings.map((t) => parseVnd(t.basePrice)),
+        );
+        updated.unitPrice = addVnd(baseP, sizeP, toppingTotal);
 
         return updated;
       })
@@ -242,21 +246,24 @@ export default function PosPage() {
   };
 
   // Tính tiền
-  const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
+  const subtotal = addVnd(
+    ...cart.map((item) => multiplyVnd(item.unitPrice, item.qty)),
+  );
 
   let discountAmount = 0;
   if (selectedPromo) {
     if (selectedPromo.type === 'PERCENTAGE') {
-      discountAmount = (subtotal * Number(selectedPromo.value)) / 100;
-      if (selectedPromo.maxDiscount && discountAmount > Number(selectedPromo.maxDiscount)) {
-        discountAmount = Number(selectedPromo.maxDiscount);
+      discountAmount = percentageOfVnd(subtotal, selectedPromo.value);
+      if (selectedPromo.maxDiscount && discountAmount > parseVnd(selectedPromo.maxDiscount)) {
+        discountAmount = parseVnd(selectedPromo.maxDiscount);
       }
     } else if (selectedPromo.type === 'FIXED_AMOUNT') {
-      discountAmount = Number(selectedPromo.value);
+      discountAmount = parseVnd(selectedPromo.value);
     }
   }
 
-  const finalTotal = Math.max(0, subtotal - discountAmount);
+  discountAmount = Math.min(discountAmount, subtotal);
+  const finalTotal = Math.max(0, addVnd(subtotal, -discountAmount));
   const totalItemCount = cart.reduce((acc, item) => acc + item.qty, 0);
 
   // Thanh toán
@@ -265,7 +272,7 @@ export default function PosPage() {
     setCheckingOut(true);
 
     try {
-      const itemsPayload = cart.map((item) => ({
+      const itemsPayload: CreateOrderRequest['items'] = cart.map((item) => ({
         productId: item.product.id,
         sizeId: item.size?.id,
         qty: item.qty,
@@ -282,20 +289,39 @@ export default function PosPage() {
         ? notesList.join(' | ') 
         : `Đơn bán hàng tại quầy (${paymentMethod})`;
 
-      const createOrderRes = await api.post('/pos/orders', {
+      const orderPayload: CreateOrderRequest = {
         branchId: selectedBranchId,
         customerId: customerInfo?.id,
         promotionId: selectedPromo?.id,
         items: itemsPayload,
         note: overallNote,
-      });
+      };
+      const fingerprint = JSON.stringify(orderPayload);
+      let attempt = checkoutAttemptRef.current;
+      if (!attempt || attempt.fingerprint !== fingerprint) {
+        attempt = {
+          fingerprint,
+          key: crypto.randomUUID(),
+        };
+        checkoutAttemptRef.current = attempt;
+      }
 
-      const orderId = createOrderRes.data.id;
+      if (!attempt.orderId) {
+        const createOrderRes = await api.post<OrderResponse>('/pos/orders', orderPayload, {
+          headers: { 'Idempotency-Key': attempt.key },
+        });
+        attempt.orderId = createOrderRes.data.id;
+      }
 
-      const checkoutRes = await api.post(`/pos/orders/${orderId}/checkout`, {
+      const checkoutPayload: CheckoutRequest = {
         paymentMethod,
         amountPaid: finalTotal,
-      });
+      };
+      const checkoutRes = await api.post<OrderResponse>(
+        `/pos/orders/${attempt.orderId}/checkout`,
+        checkoutPayload,
+        { headers: { 'Idempotency-Key': attempt.key } },
+      );
 
       setCheckedOutOrder({
         ...checkoutRes.data,
@@ -312,6 +338,7 @@ export default function PosPage() {
       setSelectedPromo(null);
       setCustomerInfo(null);
       setCustomerPhone('');
+      checkoutAttemptRef.current = null;
     } catch (err: any) {
       alert(err.response?.data?.message || 'Thanh toán thất bại, vui lòng kiểm tra lại!');
     } finally {
@@ -329,14 +356,15 @@ export default function PosPage() {
   });
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#F8FAFC] text-slate-900 select-none overflow-hidden font-sans">
+    <div className="h-screen w-full flex flex-col bg-teap-cream text-slate-900 select-none overflow-hidden font-sans">
       {/* Top POS Header */}
-      <header className="h-14 bg-[#0F2E22] text-white px-4 flex items-center justify-between shadow-sm z-20 flex-shrink-0">
+      <header className="min-h-14 bg-teap-dark text-white px-3 sm:px-4 py-2 flex items-center justify-between z-20 flex-shrink-0">
         <div className="flex items-center gap-3">
           {/* Menu Drawer Button (3 sọc) */}
           <button
+            type="button"
             onClick={() => setShowSideMenu(true)}
-            className="p-2 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition flex items-center justify-center focus:outline-none cursor-pointer"
+            className="p-2 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 cursor-pointer"
             aria-label="Mở menu chức năng"
           >
             <Menu className="w-5 h-5" />
@@ -371,13 +399,13 @@ export default function PosPage() {
         {/* Right side controls */}
         <div className="flex items-center gap-2.5 text-xs">
 
-          {user?.role !== 'CASHIER' && (
+          {hasSeparateWorkspace && (
             <Link
-              href="/admin"
+              href={workspaceHref}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/50 hover:bg-emerald-800 text-emerald-200 transition border border-emerald-700/50"
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Quản trị</span>
+              <span>Trang làm việc</span>
             </Link>
           )}
 
@@ -387,9 +415,11 @@ export default function PosPage() {
           </div>
 
           <button
+            type="button"
             onClick={logout}
             className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-800/80 transition cursor-pointer"
             title="Đăng xuất"
+            aria-label="Đăng xuất"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -399,10 +429,12 @@ export default function PosPage() {
       {/* Side Menu Drawer (3 sọc) */}
       {showSideMenu && (
         <div className="fixed inset-0 z-50 flex">
-          <div
+          <button
+            type="button"
+            aria-label="Đóng menu chức năng"
             onClick={() => setShowSideMenu(false)}
             className="fixed inset-0 bg-slate-950/60 transition-opacity"
-          ></div>
+          />
 
           <div className="relative w-80 bg-white text-slate-800 flex flex-col h-full shadow-2xl z-10 border-r border-slate-200 animate-in slide-in-from-left duration-200">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -416,7 +448,9 @@ export default function PosPage() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowSideMenu(false)}
+                aria-label="Đóng menu chức năng"
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -424,39 +458,41 @@ export default function PosPage() {
             </div>
 
             <div className="p-3 space-y-1.5 flex-1 overflow-y-auto">
-              <Link
-                href="/shift-close"
-                onClick={() => setShowSideMenu(false)}
-                className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
+              <button
+                type="button"
+                disabled
+                title="Chờ hoàn tất SHIFT-01 và FIN-01"
+                className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-left opacity-70"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                     <Calculator className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-semibold text-xs text-slate-900">Bàn giao & Kết ca</div>
-                    <div className="text-[11px] text-slate-500">Kê tiền 500k-1k & đối soát két</div>
+                    <div className="font-semibold text-xs text-slate-700">Bàn giao & kết ca</div>
+                    <div className="text-[11px] text-slate-500">Chưa khả dụng · Roadmap SHIFT-01</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
-              </Link>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Sắp tới</span>
+              </button>
 
-              <Link
-                href="/kitchen"
-                onClick={() => setShowSideMenu(false)}
-                className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
+              <button
+                type="button"
+                disabled
+                title="Chờ hoàn tất KDS-01"
+                className="flex w-full cursor-not-allowed items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-left opacity-70"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
                     <ChefHat className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-semibold text-xs text-slate-900">Màn hình Bar Bếp (KDS)</div>
-                    <div className="text-[11px] text-slate-500">Theo dõi chế biến thời gian thực</div>
+                    <div className="font-semibold text-xs text-slate-700">Hàng đợi bar & bếp</div>
+                    <div className="text-[11px] text-slate-500">Chưa khả dụng · Roadmap KDS-01</div>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">KDS</span>
-              </Link>
+              </button>
 
               <Link
                 href="/order-history"
@@ -469,66 +505,29 @@ export default function PosPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-xs text-slate-900">Lịch sử hóa đơn</div>
-                    <div className="text-[11px] text-slate-500">Tra cứu, in lại & hoàn đơn</div>
+                    <div className="text-[11px] text-slate-500">Tra cứu và xem chi tiết đơn thật</div>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
               </Link>
 
-              <Link
-                href="/customer"
-                target="_blank"
-                onClick={() => setShowSideMenu(false)}
-                className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-xs text-slate-900">Cổng tra cứu hội viên</div>
-                    <div className="text-[11px] text-slate-500">Khách tra cứu điểm & ưu đãi</div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
-              </Link>
-
-              {user?.role !== 'CASHIER' && (
-                <>
-                  <Link
-                    href="/manager"
-                    onClick={() => setShowSideMenu(false)}
-                    className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-xs text-slate-900">Quản lý Cửa Hàng</div>
-                        <div className="text-[11px] text-slate-500">Nhân sự, KPI, ca trực & vận hành</div>
-                      </div>
+              {hasSeparateWorkspace && (
+                <Link
+                  href={workspaceHref}
+                  onClick={() => setShowSideMenu(false)}
+                  className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Manager</span>
-                  </Link>
-
-                  <Link
-                    href="/admin"
-                    onClick={() => setShowSideMenu(false)}
-                    className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
-                        <LayoutDashboard className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-xs text-slate-900">Trang quản trị hệ thống</div>
-                        <div className="text-[11px] text-slate-500">Báo cáo, kho & nhân sự</div>
-                      </div>
+                    <div>
+                      <div className="font-semibold text-xs text-slate-900">Về trang làm việc</div>
+                      <div className="text-[11px] text-slate-500">Đúng cổng nghiệp vụ của tài khoản hiện tại</div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
-                  </Link>
-                </>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition" />
+                </Link>
               )}
             </div>
 
@@ -540,11 +539,11 @@ export default function PosPage() {
       )}
 
       {/* Main Workspace (Chia đôi 5/5: 50% Sản phẩm, 50% Order) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
         {/* CỘT TRÁI (50%): PHÂN LOẠI CUỘN DỌC + GRID SẢN PHẨM */}
-        <div className="w-1/2 flex flex-row overflow-hidden border-r border-slate-200 bg-[#F8FAFC]">
+        <div className="w-full md:w-1/2 min-h-[52vh] md:min-h-0 flex flex-row overflow-hidden border-b md:border-b-0 md:border-r border-slate-200 bg-teap-cream">
           {/* 1. Thanh phân loại cuộn dọc (Vertical Category Sidebar) */}
-          <div className="w-32 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
+          <div className="w-24 sm:w-32 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div className="p-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50/50">
               Danh mục
             </div>
@@ -554,7 +553,7 @@ export default function PosPage() {
                 onClick={() => setActiveCategory('all')}
                 className={`w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
                   activeCategory === 'all'
-                    ? 'bg-[#0F2E22] text-white shadow-xs'
+                    ? 'bg-teap-dark text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
@@ -575,7 +574,7 @@ export default function PosPage() {
                     onClick={() => setActiveCategory(cat.id)}
                     className={`w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
                       activeCategory === cat.id
-                        ? 'bg-[#0F2E22] text-white shadow-xs'
+                        ? 'bg-teap-dark text-white shadow-xs'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
@@ -634,7 +633,7 @@ export default function PosPage() {
 
                       <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between">
                         <div className="text-xs font-bold text-emerald-800">
-                          {Number(drink.basePrice).toLocaleString('vi-VN')} đ
+                          {formatVnd(drink.basePrice)}
                         </div>
                         <div className="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-emerald-700 text-slate-500 group-hover:text-white flex items-center justify-center transition">
                           <Plus className="w-3 h-3" />
@@ -649,7 +648,7 @@ export default function PosPage() {
         </div>
 
         {/* CỘT PHẢI (50%): BẢNG ORDER DÀI & RỘNG RÃI TOÀN MÀN HÌNH */}
-        <div className="w-1/2 bg-white flex flex-col h-full flex-shrink-0">
+        <div className="w-full md:w-1/2 min-h-[68vh] md:min-h-0 bg-white flex flex-col md:h-full flex-shrink-0">
           {/* 1. Header Order gọn gàng */}
           <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
             <div className="flex items-center gap-2 font-bold text-slate-900 text-xs tracking-tight">
@@ -954,7 +953,7 @@ export default function PosPage() {
                       <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs">
                         <span className="text-slate-500 font-medium text-[11px]">Thành tiền món:</span>
                         <div className="text-xs font-bold text-emerald-800">
-                          {(item.unitPrice * item.qty).toLocaleString('vi-VN')} đ
+                          {formatVnd(multiplyVnd(item.unitPrice, item.qty))}
                         </div>
                       </div>
                     </div>
@@ -1008,7 +1007,7 @@ export default function PosPage() {
 
                       <div className="text-right flex-shrink-0">
                         <div className="text-xs font-bold text-slate-900">
-                          {(item.unitPrice * item.qty).toLocaleString('vi-VN')} đ
+                          {formatVnd(multiplyVnd(item.unitPrice, item.qty))}
                         </div>
                         <div className="flex items-center gap-1 justify-end mt-0.5">
                           <span className="text-[10px] text-emerald-700 group-hover:underline flex items-center gap-0.5">
@@ -1024,7 +1023,7 @@ export default function PosPage() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span className="text-[10px] text-slate-400">
-                        {item.unitPrice.toLocaleString('vi-VN')} đ / ly
+                        {formatVnd(item.unitPrice)} / ly
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded-lg border border-slate-200">
@@ -1091,52 +1090,29 @@ export default function PosPage() {
               <div className="text-right flex-shrink-0 flex items-baseline gap-2">
                 {discountAmount > 0 && (
                   <span className="text-[11px] text-rose-600 font-medium">
-                    -{discountAmount.toLocaleString('vi-VN')}đ
+                    -{formatVnd(discountAmount)}
                   </span>
                 )}
                 <span className="text-slate-500 text-xs">Tổng:</span>
                 <span className="text-base font-black text-[#0F2E22]">
-                  {finalTotal.toLocaleString('vi-VN')} đ
+                  {formatVnd(finalTotal)}
                 </span>
               </div>
             </div>
 
             {/* Hàng 2: Phương thức thanh toán + Nút THANH TOÁN (Gọn gàng trong 1 hàng ngang) */}
             <div className="flex items-center gap-2">
-              <div className="grid grid-cols-3 gap-1 flex-1">
+              <div className="flex flex-1 items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('CASH')}
-                  className={`py-1.5 text-xs font-bold rounded-lg border transition flex items-center justify-center gap-1 cursor-pointer ${
-                    paymentMethod === 'CASH'
-                      ? 'bg-[#0F2E22] text-white border-[#0F2E22]'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
+                  className="flex items-center justify-center gap-1 rounded-lg border border-[#0F2E22] bg-[#0F2E22] px-4 py-1.5 text-xs font-bold text-white"
                 >
                   <DollarSign className="w-3.5 h-3.5" /> Tiền mặt
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('MOMO')}
-                  className={`py-1.5 text-xs font-bold rounded-lg border transition flex items-center justify-center gap-1 cursor-pointer ${
-                    paymentMethod === 'MOMO'
-                      ? 'bg-pink-600 text-white border-pink-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  <QrCode className="w-3.5 h-3.5" /> MoMo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('VNPAY')}
-                  className={`py-1.5 text-xs font-bold rounded-lg border transition flex items-center justify-center gap-1 cursor-pointer ${
-                    paymentMethod === 'VNPAY'
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  <CreditCard className="w-3.5 h-3.5" /> VNPay
-                </button>
+                <span className="text-[11px] text-slate-500">
+                  Thanh toán điện tử sẽ mở khi kết nối xác minh nhà cung cấp.
+                </span>
               </div>
 
               {/* Nút THANH TOÁN bản to tích hợp cùng hàng */}
@@ -1181,7 +1157,7 @@ export default function PosPage() {
               </div>
 
               <div className="space-y-1 py-1 max-h-40 overflow-y-auto">
-                {checkedOutOrder.cartItems?.map((item: any, idx: number) => (
+                {checkedOutOrder.cartItems.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-[11px]">
                     <span className="truncate pr-2">
                       {item.qty}x {item.product.name} {item.size ? `(${item.size.name})` : ''}

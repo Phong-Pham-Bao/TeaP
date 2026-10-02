@@ -1,0 +1,5993 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/platform/operations/metrics": {
+      "get": {
+        "operationId": "PlatformOperations_getMetrics",
+        "summary": "Read outbox backlog and dead-letter metrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformMetricsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Platform Operations"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/outbox/dead-letters": {
+      "get": {
+        "operationId": "PlatformOperations_findDeadLetters",
+        "summary": "List dead-letter events using cursor pagination",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeadLetterPageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Platform Operations"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/outbox/{id}/replay": {
+      "post": {
+        "operationId": "PlatformOperations_replayDeadLetter",
+        "summary": "Replay one dead-letter event with an audit reason",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayOutboxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayOutboxResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Platform Operations"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/retention/cleanup": {
+      "post": {
+        "operationId": "PlatformOperations_runRetentionCleanup",
+        "summary": "Delete one bounded batch of expired platform data",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRetentionCleanupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionCleanupResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Platform Operations"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "Auth_login",
+        "summary": "Login and get tokens",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "Auth_refreshTokens",
+        "summary": "Refresh access tokens",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tokens refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "Auth_logout",
+        "summary": "Logout and invalidate refresh tokens",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful logout"
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "Auth_getProfile",
+        "summary": "Get current user profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User profile returned successfully"
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "post": {
+        "operationId": "Users_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Users_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user role",
+            "schema": {
+              "enum": [
+                "SUPER_ADMIN",
+                "MANAGER",
+                "HR",
+                "ACCOUNTANT",
+                "CASHIER",
+                "WAREHOUSE_STAFF",
+                "KITCHEN_STAFF"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by full name or email",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/UserResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "operationId": "Users_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Users_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Users_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedUserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/branches": {
+      "post": {
+        "operationId": "Branches_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Branches"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Branches_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BranchResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Branches"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/branches/{id}": {
+      "get": {
+        "operationId": "Branches_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Branches"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Branches_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Branches"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Branches_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Branches"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/categories": {
+      "post": {
+        "operationId": "Categories_create",
+        "summary": "Create a new category",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Categories_findAll",
+        "summary": "Get all active categories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "operationId": "Categories_findOne",
+        "summary": "Get a category by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Categories_update",
+        "summary": "Update a category",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Categories_remove",
+        "summary": "Soft delete a category",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/products/menu": {
+      "get": {
+        "operationId": "Products_getMenu",
+        "summary": "Get active POS menu grouped by category",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/products": {
+      "post": {
+        "operationId": "Products_create",
+        "summary": "Create a new product",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Products_findAll",
+        "summary": "Get all products with pagination and filters",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "DRINK",
+                "TOPPING",
+                "MATERIAL"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ProductResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/products/{id}": {
+      "get": {
+        "operationId": "Products_findOne",
+        "summary": "Get product by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Products_update",
+        "summary": "Update a product",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Products_remove",
+        "summary": "Soft delete a product",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/recipes/{drinkId}": {
+      "get": {
+        "operationId": "Recipes_getRecipe",
+        "summary": "Get recipe for a specific drink",
+        "parameters": [
+          {
+            "name": "drinkId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecipeItemResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Recipes_setRecipe",
+        "summary": "Set or update recipe for a specific drink",
+        "parameters": [
+          {
+            "name": "drinkId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecipeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecipeItemResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pos/orders": {
+      "post": {
+        "operationId": "Pos_createOrder",
+        "summary": "Create a new POS order",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Pos_findAll",
+        "summary": "Get list of POS orders",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Order Status",
+            "schema": {
+              "enum": [
+                "PENDING",
+                "PAID",
+                "CANCELLED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Start Date (ISO string)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "Filter by End Date (ISO string)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cashierId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Cashier ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by Order Number, Customer Phone or Name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/OrderResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pos/orders/{id}/checkout": {
+      "post": {
+        "operationId": "Pos_checkout",
+        "summary": "Process checkout and payment for an order",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pos/orders/{id}/cancel": {
+      "post": {
+        "operationId": "Pos_cancelOrder",
+        "summary": "Cancel an order and revert inventory/points with a reason",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pos/orders/{id}": {
+      "get": {
+        "operationId": "Pos_findOne",
+        "summary": "Get details of a specific order",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pos/orders/{id}/add-missing-item": {
+      "post": {
+        "operationId": "Pos_addMissingItem",
+        "summary": "Store manager adds a missing or compensated item to an existing order",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "POS"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory": {
+      "get": {
+        "operationId": "Inventory_findAll",
+        "summary": "List inventory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "belowMin",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/InventoryResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory/import": {
+      "post": {
+        "operationId": "Inventory_importStock",
+        "summary": "Import stock",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StockMutationItemResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory/adjust": {
+      "post": {
+        "operationId": "Inventory_adjustStock",
+        "summary": "Adjust stock",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockAdjustmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory/transfer": {
+      "post": {
+        "operationId": "Inventory_transferStock",
+        "summary": "Transfer stock between branches",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockTransferResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory/alerts": {
+      "get": {
+        "operationId": "Inventory_getAlerts",
+        "summary": "Get low stock alerts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/inventory/ledger": {
+      "get": {
+        "operationId": "Inventory_getLedger",
+        "summary": "Get stock ledger history",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "materialId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "refType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ORDER",
+                "IMPORT",
+                "ADJUSTMENT",
+                "TRANSFER_IN",
+                "TRANSFER_OUT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/StockLedgerResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Inventory"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers": {
+      "post": {
+        "operationId": "Customers_create",
+        "summary": "Create a new customer",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Customers_findAll",
+        "summary": "Get all customers with pagination and search",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by full name or phone number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers/lookup": {
+      "post": {
+        "operationId": "Customers_findByPhone",
+        "summary": "Lookup the minimum customer profile needed at POS",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers/{id}": {
+      "get": {
+        "operationId": "Customers_findOne",
+        "summary": "Get customer by ID with recent orders and point history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Customers_update",
+        "summary": "Update customer information",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers/{id}/points": {
+      "get": {
+        "operationId": "Customers_getPointHistory",
+        "summary": "Get point history for a customer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by full name or phone number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/promotions": {
+      "post": {
+        "operationId": "Promotions_create",
+        "summary": "Create a new promotion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Promotions_findAll",
+        "summary": "Get all promotions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/promotions/active": {
+      "get": {
+        "operationId": "Promotions_findActive",
+        "summary": "Get all active promotions within valid date range",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/promotions/{id}": {
+      "get": {
+        "operationId": "Promotions_findOne",
+        "summary": "Get a promotion by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "Promotions_update",
+        "summary": "Update a promotion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/promotions/{id}/deactivate": {
+      "post": {
+        "operationId": "Promotions_deactivate",
+        "summary": "Deactivate a promotion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/attendance/check-in": {
+      "post": {
+        "operationId": "Attendance_checkIn",
+        "summary": "Check in for today",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/attendance/check-out": {
+      "post": {
+        "operationId": "Attendance_checkOut",
+        "summary": "Check out for today",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/attendance": {
+      "get": {
+        "operationId": "Attendance_findAll",
+        "summary": "Get all attendance records (HR/Manager/Admin)",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AttendanceResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/attendance/me": {
+      "get": {
+        "operationId": "Attendance_getMyAttendance",
+        "summary": "Get current user attendance records",
+        "parameters": [
+          {
+            "name": "month",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/schedules": {
+      "post": {
+        "operationId": "Schedule_create",
+        "summary": "Create a work schedule",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Schedule_findAll",
+        "summary": "Get all schedules",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/WorkScheduleResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/schedules/bulk": {
+      "post": {
+        "operationId": "Schedule_createBulk",
+        "summary": "Create multiple work schedules",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkScheduleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/schedules/me": {
+      "get": {
+        "operationId": "Schedule_getMySchedule",
+        "summary": "Get my schedules",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkScheduleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/schedules/{id}": {
+      "delete": {
+        "operationId": "Schedule_remove",
+        "summary": "Delete a schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/salary-slips": {
+      "post": {
+        "operationId": "Salary_create",
+        "summary": "Create salary slip",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSalarySlipDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalarySlipResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Salary_findAll",
+        "summary": "Get all salary slips",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "month",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "isPaid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SalarySlipResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/salary-slips/me": {
+      "get": {
+        "operationId": "Salary_getMySlips",
+        "summary": "Get my salary slips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalarySlipResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/salary-slips/{id}/pay": {
+      "patch": {
+        "operationId": "Salary_markAsPaid",
+        "summary": "Mark salary slip as paid",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalarySlipResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/announcements": {
+      "post": {
+        "operationId": "Announcement_create",
+        "summary": "Create an announcement",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Announcement_findAll",
+        "summary": "Get all active announcements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/hr/announcements/{id}": {
+      "get": {
+        "operationId": "Announcement_findOne",
+        "summary": "Get an announcement by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Announcement_remove",
+        "summary": "Delete an announcement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HR"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/cash-flows": {
+      "post": {
+        "operationId": "Finance_create",
+        "summary": "Create a cash flow entry",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCashFlowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "Finance_findAll",
+        "summary": "Get all cash flows with filters and pagination",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by CashFlowType",
+            "schema": {
+              "enum": [
+                "INCOME",
+                "EXPENSE"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start date filter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End date filter",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PaginatedResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CashFlowResponseDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/summary": {
+      "get": {
+        "operationId": "Finance_getSummary",
+        "summary": "Get financial summary",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowSummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/revenue": {
+      "get": {
+        "operationId": "Reports_getRevenueReport",
+        "summary": "Get revenue report",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start business date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End business date, inclusive (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "day",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/top-products": {
+      "get": {
+        "operationId": "Reports_getTopProducts",
+        "summary": "Get top selling products",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start business date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End business date, inclusive (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "day",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/inventory-summary": {
+      "get": {
+        "operationId": "Reports_getInventorySummary",
+        "summary": "Get inventory summary and status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/cashier-performance": {
+      "get": {
+        "operationId": "Reports_getCashierPerformance",
+        "summary": "Get cashier performance",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Branch ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start business date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End business date, inclusive (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "day",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/dashboard": {
+      "get": {
+        "operationId": "Reports_getDashboardSummary",
+        "summary": "Get overall dashboard summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "TeaP ERP/POS API",
+    "description": "API documentation for TeaP — Bubble Tea Chain ERP/POS Management System. Supports multi-branch operations, POS, inventory management, HR, and finance.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication & Authorization"
+    },
+    {
+      "name": "Users",
+      "description": "User management"
+    },
+    {
+      "name": "Branches",
+      "description": "Branch management"
+    },
+    {
+      "name": "Categories",
+      "description": "Product category management"
+    },
+    {
+      "name": "Products",
+      "description": "Product & menu management"
+    },
+    {
+      "name": "Recipes",
+      "description": "Recipe / BOM management"
+    },
+    {
+      "name": "POS",
+      "description": "Point of Sale operations"
+    },
+    {
+      "name": "Inventory",
+      "description": "Stock & warehouse management"
+    },
+    {
+      "name": "Customers",
+      "description": "Customer & loyalty management"
+    },
+    {
+      "name": "Promotions",
+      "description": "Promotion & discount management"
+    },
+    {
+      "name": "HR",
+      "description": "Human resources management"
+    },
+    {
+      "name": "Finance",
+      "description": "Cash flow & financial management"
+    },
+    {
+      "name": "Reports",
+      "description": "Analytics & reporting"
+    },
+    {
+      "name": "Platform Operations",
+      "description": "Outbox monitoring, replay, and retention"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "JWT-auth": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "JWT",
+        "description": "Enter JWT access token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "PlatformMetricsResponseDto": {
+        "type": "object",
+        "properties": {
+          "outboxByStatus": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "actionableBacklog": {
+            "type": "number"
+          },
+          "deadLetterCount": {
+            "type": "number"
+          },
+          "oldestActionableAgeSeconds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "oldestDeadLetterAgeSeconds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "outboxByStatus",
+          "actionableBacklog",
+          "deadLetterCount",
+          "oldestActionableAgeSeconds",
+          "oldestDeadLetterAgeSeconds",
+          "measuredAt"
+        ]
+      },
+      "DeadLetterResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "aggregateType",
+          "aggregateId",
+          "eventType",
+          "attempts",
+          "lastError",
+          "correlationId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DeadLetterPageResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeadLetterResponseDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ]
+      },
+      "ReplayOutboxDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ReplayOutboxResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "example": "PENDING"
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "availableAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "attempts",
+          "availableAt"
+        ]
+      },
+      "RunRetentionCleanupDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          },
+          "batchSize": {
+            "type": "object",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "RetentionCleanupResponseDto": {
+        "type": "object",
+        "properties": {
+          "deletedAuditEvents": {
+            "type": "number"
+          },
+          "deletedIdempotencyRecords": {
+            "type": "number"
+          },
+          "deletedPublishedOutboxEvents": {
+            "type": "number"
+          },
+          "batchSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "deletedAuditEvents",
+          "deletedIdempotencyRecords",
+          "deletedPublishedOutboxEvents",
+          "batchSize"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@teap.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "MANAGER",
+              "HR",
+              "ACCOUNTANT",
+              "CASHIER",
+              "WAREHOUSE_STAFF",
+              "KITCHEN_STAFF"
+            ]
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "allowedBranchIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "role",
+          "allowedBranchIds"
+        ]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "csrfToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserProfileDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "csrfToken",
+          "user"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The email of the user"
+          },
+          "password": {
+            "type": "string",
+            "description": "The password of the user"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "The full name of the user"
+          },
+          "phone": {
+            "type": "string",
+            "description": "The phone number of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "MANAGER",
+              "HR",
+              "ACCOUNTANT",
+              "CASHIER",
+              "WAREHOUSE_STAFF",
+              "KITCHEN_STAFF"
+            ],
+            "description": "The role of the user",
+            "default": "CASHIER"
+          },
+          "branchId": {
+            "type": "string",
+            "description": "The ID of the branch the user belongs to"
+          },
+          "branchIds": {
+            "description": "All branches this user may access. branchId is always included as the primary branch.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "role"
+        ]
+      },
+      "UserBranchReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "UserBranchAssignmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/UserBranchReferenceDto"
+          }
+        },
+        "required": [
+          "branchId",
+          "isPrimary",
+          "branch"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "MANAGER",
+              "HR",
+              "ACCOUNTANT",
+              "CASHIER",
+              "WAREHOUSE_STAFF",
+              "KITCHEN_STAFF"
+            ]
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "branch": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserBranchReferenceDto"
+              }
+            ]
+          },
+          "branchAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserBranchAssignmentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "role",
+          "isActive",
+          "createdAt",
+          "updatedAt",
+          "branchAssignments"
+        ]
+      },
+      "PaginatedResponseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The email of the user"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "The full name of the user"
+          },
+          "phone": {
+            "type": "string",
+            "description": "The phone number of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "MANAGER",
+              "HR",
+              "ACCOUNTANT",
+              "CASHIER",
+              "WAREHOUSE_STAFF",
+              "KITCHEN_STAFF"
+            ],
+            "description": "The role of the user",
+            "default": "CASHIER"
+          },
+          "branchId": {
+            "type": "string",
+            "description": "The ID of the branch the user belongs to"
+          },
+          "branchIds": {
+            "description": "All branches this user may access. branchId is always included as the primary branch.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "password": {
+            "type": "string",
+            "description": "The password of the user"
+          }
+        }
+      },
+      "DeletedUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreateBranchDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the branch"
+          },
+          "address": {
+            "type": "string",
+            "description": "The address of the branch"
+          },
+          "phone": {
+            "type": "string",
+            "description": "The phone number of the branch"
+          }
+        },
+        "required": [
+          "name",
+          "address"
+        ]
+      },
+      "BranchCountResponseDto": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "number"
+          },
+          "orders": {
+            "type": "number"
+          },
+          "inventories": {
+            "type": "number"
+          }
+        }
+      },
+      "BranchUserReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email",
+          "role"
+        ]
+      },
+      "BranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "$ref": "#/components/schemas/BranchCountResponseDto"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchUserReferenceDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "address",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateBranchDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the branch"
+          },
+          "address": {
+            "type": "string",
+            "description": "The address of the branch"
+          },
+          "phone": {
+            "type": "string",
+            "description": "The phone number of the branch"
+          }
+        }
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort order for display"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CategoryProductCountDto": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "products"
+        ]
+      },
+      "CategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "$ref": "#/components/schemas/CategoryProductCountDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sortOrder",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Sort order for display"
+          }
+        }
+      },
+      "CategoryReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ProductSizeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priceAdj": {
+            "type": "integer",
+            "description": "Whole VND",
+            "example": 5000
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "name",
+          "priceAdj"
+        ]
+      },
+      "ProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DRINK",
+              "TOPPING",
+              "MATERIAL"
+            ]
+          },
+          "basePrice": {
+            "type": "integer",
+            "description": "Whole VND",
+            "example": 45000
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "category": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CategoryReferenceDto"
+              }
+            ]
+          },
+          "sizes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSizeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "type",
+          "basePrice",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MenuCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sortOrder",
+          "isActive",
+          "products"
+        ]
+      },
+      "MenuResponseDto": {
+        "type": "object",
+        "properties": {
+          "drinks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResponseDto"
+            }
+          },
+          "toppings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResponseDto"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuCategoryResponseDto"
+            }
+          }
+        },
+        "required": [
+          "drinks",
+          "toppings",
+          "categories"
+        ]
+      },
+      "ProductSizeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Size name, e.g., S, M, L"
+          },
+          "priceAdjustment": {
+            "type": "integer",
+            "minimum": -9999999999,
+            "maximum": 9999999999,
+            "description": "Price adjustment in whole VND"
+          }
+        },
+        "required": [
+          "name",
+          "priceAdjustment"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Unique SKU for the product"
+          },
+          "name": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DRINK",
+              "TOPPING",
+              "MATERIAL"
+            ],
+            "description": "Type of product"
+          },
+          "basePrice": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Base price in whole VND",
+            "example": 45000
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Category ID"
+          },
+          "image": {
+            "type": "string",
+            "description": "Image URL"
+          },
+          "sizes": {
+            "description": "Product sizes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSizeDto"
+            }
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "type",
+          "basePrice"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Unique SKU for the product"
+          },
+          "name": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DRINK",
+              "TOPPING",
+              "MATERIAL"
+            ],
+            "description": "Type of product"
+          },
+          "basePrice": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Base price in whole VND",
+            "example": 45000
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Category ID"
+          },
+          "image": {
+            "type": "string",
+            "description": "Image URL"
+          },
+          "sizes": {
+            "description": "Product sizes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSizeDto"
+            }
+          }
+        }
+      },
+      "RecipeMaterialResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DRINK",
+              "TOPPING",
+              "MATERIAL"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "type"
+        ]
+      },
+      "RecipeSizeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "RecipeItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "drinkId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "sizeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "string",
+            "example": "25.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$",
+            "description": "Exact decimal quantity; parse explicitly when calculating"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "material": {
+            "$ref": "#/components/schemas/RecipeMaterialResponseDto"
+          },
+          "size": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeSizeResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "drinkId",
+          "materialId",
+          "quantity",
+          "unit"
+        ]
+      },
+      "RecipeItemDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string",
+            "description": "ID of the material product"
+          },
+          "sizeId": {
+            "type": "string",
+            "description": "ID of the product size (if specific to a size)"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity of the material used"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measurement (e.g., ml, g, pcs)"
+          }
+        },
+        "required": [
+          "materialId",
+          "quantity",
+          "unit"
+        ]
+      },
+      "UpdateRecipeDto": {
+        "type": "object",
+        "properties": {
+          "drinkId": {
+            "type": "string",
+            "description": "ID of the drink product"
+          },
+          "items": {
+            "description": "List of recipe items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeItemDto"
+            }
+          }
+        },
+        "required": [
+          "drinkId",
+          "items"
+        ]
+      },
+      "AttributesDto": {
+        "type": "object",
+        "properties": {
+          "ice": {
+            "type": "number",
+            "description": "Ice percentage (0-100)"
+          },
+          "sugar": {
+            "type": "number",
+            "description": "Sugar percentage (0-100)"
+          },
+          "toppings": {
+            "description": "Topping product IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string",
+            "description": "Preparation note for this item"
+          }
+        }
+      },
+      "CreateOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "Product ID (must be a drink/product)"
+          },
+          "sizeId": {
+            "type": "string",
+            "description": "Size ID"
+          },
+          "qty": {
+            "type": "number",
+            "description": "Quantity"
+          },
+          "attributes": {
+            "description": "Attributes like ice, sugar, toppings",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttributesDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "productId",
+          "qty"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "description": "Branch ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Customer ID"
+          },
+          "promotionId": {
+            "type": "string",
+            "description": "Promotion ID"
+          },
+          "items": {
+            "description": "Order items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderItemDto"
+            }
+          },
+          "note": {
+            "type": "string",
+            "description": "Note for the order"
+          }
+        },
+        "required": [
+          "branchId",
+          "items"
+        ]
+      },
+      "OrderProductReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DRINK",
+              "TOPPING",
+              "MATERIAL"
+            ]
+          },
+          "basePrice": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "type"
+        ]
+      },
+      "OrderSizeReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priceAdj": {
+            "type": "integer",
+            "description": "Whole VND"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "OrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "sizeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "qty": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 45000
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 90000
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/OrderProductReferenceDto"
+          },
+          "size": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderSizeReferenceDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "qty",
+          "unitPrice",
+          "subtotal"
+        ]
+      },
+      "PaymentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "VNPAY",
+              "MOMO",
+              "BANK_TRANSFER"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 90000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "FAILED",
+              "REFUNDED"
+            ]
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "method",
+          "amount",
+          "status",
+          "createdAt"
+        ]
+      },
+      "OrderCustomerReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "phone"
+        ]
+      },
+      "OrderCashierReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName"
+        ]
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "cashierId": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "promotionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 100000
+          },
+          "discount": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 10000
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "Whole VND",
+            "example": 90000
+          },
+          "pointsEarned": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "CANCELLED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponseDto"
+            }
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentResponseDto"
+            }
+          },
+          "customer": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderCustomerReferenceDto"
+              }
+            ]
+          },
+          "cashier": {
+            "$ref": "#/components/schemas/OrderCashierReferenceDto"
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "branchId",
+          "cashierId",
+          "subtotal",
+          "discount",
+          "totalAmount",
+          "pointsEarned",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "items"
+        ]
+      },
+      "CheckoutDto": {
+        "type": "object",
+        "properties": {
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "VNPAY",
+              "MOMO",
+              "BANK_TRANSFER"
+            ],
+            "description": "Payment Method (CASH, VNPAY, MOMO, BANK_TRANSFER)"
+          },
+          "amountPaid": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Amount paid by customer in whole VND",
+            "example": 100000
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "Transaction ID for external payment methods"
+          }
+        },
+        "required": [
+          "paymentMethod",
+          "amountPaid"
+        ]
+      },
+      "InventoryMaterialResponseDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "InventoryBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "InventoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "currentStock": {
+            "type": "string",
+            "example": "1250.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "minStock": {
+            "type": "string",
+            "example": "250",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "material": {
+            "$ref": "#/components/schemas/InventoryMaterialResponseDto"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/InventoryBranchResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "branchId",
+          "materialId",
+          "currentStock",
+          "minStock",
+          "unit",
+          "updatedAt",
+          "material",
+          "branch"
+        ]
+      },
+      "ImportStockItemDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "materialId",
+          "quantity",
+          "unit"
+        ]
+      },
+      "ImportStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportStockItemDto"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchId",
+          "items"
+        ]
+      },
+      "StockMutationItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "balanceAfter": {
+            "type": "string",
+            "example": "1250.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          }
+        },
+        "required": [
+          "balanceAfter"
+        ]
+      },
+      "AdjustStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "newStock": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchId",
+          "materialId",
+          "newStock"
+        ]
+      },
+      "StockAdjustmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string"
+          },
+          "balanceAfter": {
+            "type": "string",
+            "example": "1250.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "balanceAfter",
+          "success"
+        ]
+      },
+      "TransferStockDto": {
+        "type": "object",
+        "properties": {
+          "fromBranchId": {
+            "type": "string"
+          },
+          "toBranchId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromBranchId",
+          "toBranchId",
+          "materialId",
+          "quantity"
+        ]
+      },
+      "StockTransferResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "sourceAfter": {
+            "type": "string",
+            "example": "1000",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "destAfter": {
+            "type": "string",
+            "example": "250.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          }
+        },
+        "required": [
+          "success",
+          "sourceAfter",
+          "destAfter"
+        ]
+      },
+      "StockLedgerResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "inventoryId": {
+            "type": "string"
+          },
+          "changeQty": {
+            "type": "string",
+            "example": "-25.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "balanceAfter": {
+            "type": "string",
+            "example": "1225",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "refType": {
+            "type": "string",
+            "enum": [
+              "ORDER",
+              "IMPORT",
+              "ADJUSTMENT",
+              "TRANSFER_IN",
+              "TRANSFER_OUT"
+            ]
+          },
+          "refId": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/InventoryBranchResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "branchId",
+          "materialId",
+          "inventoryId",
+          "changeQty",
+          "balanceAfter",
+          "refType",
+          "createdAt"
+        ]
+      },
+      "CreateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Full name of the customer"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the customer (VN format)"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the customer"
+          }
+        },
+        "required": [
+          "fullName",
+          "phone"
+        ]
+      },
+      "LookupCustomerDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "0901234567"
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "UpdateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Full name of the customer"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the customer (VN format)"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the customer"
+          }
+        }
+      },
+      "CreatePromotionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the promotion"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the promotion"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PERCENTAGE",
+              "FIXED_AMOUNT",
+              "BUY_X_GET_Y"
+            ],
+            "description": "Type of promotion"
+          },
+          "value": {
+            "type": "number",
+            "description": "Discount value (percentage or fixed amount)"
+          },
+          "minOrderValue": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Minimum order value required for promotion"
+          },
+          "maxDiscount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Maximum discount amount allowed"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date of the promotion"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date of the promotion"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "UpdatePromotionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the promotion"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the promotion"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PERCENTAGE",
+              "FIXED_AMOUNT",
+              "BUY_X_GET_Y"
+            ],
+            "description": "Type of promotion"
+          },
+          "value": {
+            "type": "number",
+            "description": "Discount value (percentage or fixed amount)"
+          },
+          "minOrderValue": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Minimum order value required for promotion"
+          },
+          "maxDiscount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999,
+            "description": "Maximum discount amount allowed"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date of the promotion"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date of the promotion"
+          }
+        }
+      },
+      "CheckInDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "Note for check-in or check-out"
+          }
+        }
+      },
+      "HrUserReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "AttendanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "hoursWorked": {
+            "type": "string",
+            "nullable": true,
+            "example": "7.5",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$",
+            "description": "Exact decimal hours"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/HrUserReferenceDto"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "date",
+          "createdAt"
+        ]
+      },
+      "CreateScheduleDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "shiftName": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "branchId",
+          "date",
+          "shiftName",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "HrBranchReferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "WorkScheduleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "shiftName": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "08:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "16:00"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/HrUserReferenceDto"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/HrBranchReferenceDto"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "branchId",
+          "date",
+          "shiftName",
+          "startTime",
+          "endTime",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateSalarySlipDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "month": {
+            "type": "number"
+          },
+          "year": {
+            "type": "number"
+          },
+          "baseSalary": {
+            "type": "number"
+          },
+          "bonus": {
+            "type": "number"
+          },
+          "deduction": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "month",
+          "year",
+          "baseSalary"
+        ]
+      },
+      "SalarySlipResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "month": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "year": {
+            "type": "number"
+          },
+          "baseSalary": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "bonus": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "deduction": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "netSalary": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPaid": {
+            "type": "boolean"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/HrUserReferenceDto"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "month",
+          "year",
+          "baseSalary",
+          "bonus",
+          "deduction",
+          "netSalary",
+          "isPaid",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateAnnouncementDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ]
+      },
+      "AnnouncementResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "authorId",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CashFlowDateSummaryDto": {
+        "type": "object",
+        "properties": {
+          "income": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "expense": {
+            "type": "integer",
+            "description": "Whole VND"
+          }
+        },
+        "required": [
+          "income",
+          "expense"
+        ]
+      },
+      "CreateCashFlowDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "description": "Branch ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ],
+            "description": "Type of cash flow"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999999999,
+            "description": "Amount in whole VND",
+            "example": 50000
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the cash flow"
+          },
+          "refType": {
+            "type": "string",
+            "description": "Reference Type (e.g. ORDER, SALARY)"
+          },
+          "refId": {
+            "type": "string",
+            "description": "Reference ID"
+          }
+        },
+        "required": [
+          "branchId",
+          "type",
+          "amount",
+          "description"
+        ]
+      },
+      "CashFlowBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CashFlowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Whole VND",
+            "example": 150000
+          },
+          "description": {
+            "type": "string"
+          },
+          "refType": {
+            "type": "string",
+            "nullable": true
+          },
+          "refId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/CashFlowBranchResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "branchId",
+          "type",
+          "amount",
+          "description",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "CashFlowSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalIncome": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "totalExpense": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "netCashFlow": {
+            "type": "integer",
+            "description": "Whole VND"
+          },
+          "groupedByDate": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CashFlowDateSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "totalIncome",
+          "totalExpense",
+          "netCashFlow",
+          "groupedByDate"
+        ]
+      }
+    }
+  }
+}

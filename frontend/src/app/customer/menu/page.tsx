@@ -13,34 +13,10 @@ import {
   Users,
 } from 'lucide-react';
 import api from '@/lib/api';
+import type { components } from '@/lib/api-contract.generated';
 
-interface ProductSize {
-  id: string;
-  name: string;
-  priceAdj: number | string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  basePrice: number | string;
-  image?: string | null;
-  categoryId?: string | null;
-  category?: Category | null;
-  sizes?: ProductSize[];
-}
-
-interface MenuResponse {
-  drinks: Product[];
-  toppings: Product[];
-  categories: Category[];
-}
+type Product = components['schemas']['ProductResponseDto'];
+type MenuResponse = components['schemas']['MenuResponseDto'];
 
 const formatPrice = (value: number | string) => {
   const price = Number(value);

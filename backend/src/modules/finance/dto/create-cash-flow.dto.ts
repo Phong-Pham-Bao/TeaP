@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { CashFlowType } from '@prisma/client';
+import { VND_MAX_AMOUNT } from '../../../common/money/vietnamese-dong';
 
 export class CreateCashFlowDto {
   @ApiProperty({ description: 'Branch ID' })
@@ -12,9 +13,16 @@ export class CreateCashFlowDto {
   @IsEnum(CashFlowType)
   type: CashFlowType;
 
-  @ApiProperty({ description: 'Amount' })
-  @IsNumber()
-  @Min(0)
+  @ApiProperty({
+    type: 'integer',
+    minimum: 1,
+    maximum: VND_MAX_AMOUNT,
+    description: 'Amount in whole VND',
+    example: 50000,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(VND_MAX_AMOUNT)
   amount: number;
 
   @ApiProperty({ description: 'Description of the cash flow' })

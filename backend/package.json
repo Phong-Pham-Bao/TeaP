@@ -11,9 +11,26 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:ci": "jest --runInBand",
+    "test:db:guard": "ts-node scripts/assert-test-database.ts",
+    "test:platform:db": "ts-node scripts/verify-platform-database.ts",
+    "test:platform-ops:db": "ts-node scripts/verify-platform-operations-database.ts",
+    "test:security:db": "ts-node scripts/verify-auth-security-database.ts",
+    "test:security:api": "jest --runInBand src/common/auth/permission-matrix.spec.ts src/common/guards/roles.guard.spec.ts src/modules/inventory/inventory.authorization.integration.spec.ts",
+    "test:sequence:db": "ts-node scripts/verify-document-sequence-database.ts",
+    "test:approval:db": "ts-node scripts/verify-approval-database.ts",
+    "test:pos-race:db": "ts-node scripts/verify-pos-checkout-race.ts",
+    "test:seed:idempotency": "ts-node scripts/verify-seed-idempotency.ts",
+    "test:upgrade:rehearsal": "ts-node scripts/rehearse-database-upgrade.ts",
+    "data:standardize:dry-run": "ts-node scripts/standardize-data.ts",
+    "openapi:spec": "ts-node scripts/generate-openapi.ts",
+    "openapi:types": "openapi-typescript openapi/openapi.json -o ../frontend/src/lib/api-contract.generated.ts",
+    "openapi:generate": "npm run openapi:spec && npm run openapi:types",
+    "openapi:check": "ts-node scripts/check-openapi-contract.ts",
+    "typecheck": "tsc --noEmit --incremental false",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "prisma:generate": "prisma generate",
@@ -58,6 +75,7 @@
     "@typescript-eslint/parser": "^8.24.0",
     "eslint": "^9.20.0",
     "jest": "^29.7.0",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.5.1",
     "prisma": "^6.5.0",
     "source-map-support": "^0.5.21",
@@ -69,13 +87,19 @@
     "typescript": "^5.7.3"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },

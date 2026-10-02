@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { ProductType } from '@prisma/client';
+import { toRecipeItemResponse } from './dto/recipe-response.dto';
 
 @Injectable()
 export class RecipesService {
@@ -17,13 +18,14 @@ export class RecipesService {
       throw new NotFoundException(`Drink with ID ${drinkId} not found`);
     }
 
-    return this.prisma.recipeItem.findMany({
+    const items = await this.prisma.recipeItem.findMany({
       where: { drinkId },
       include: {
         material: true,
         size: true,
       },
     });
+    return items.map(toRecipeItemResponse);
   }
 
   async setRecipe(updateRecipeDto: UpdateRecipeDto) {
@@ -69,13 +71,14 @@ export class RecipesService {
         });
       }
 
-      return tx.recipeItem.findMany({
+      const recipeItems = await tx.recipeItem.findMany({
         where: { drinkId },
         include: {
           material: true,
           size: true,
         },
       });
+      return recipeItems.map(toRecipeItemResponse);
     });
   }
 

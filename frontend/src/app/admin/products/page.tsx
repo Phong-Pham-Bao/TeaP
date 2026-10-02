@@ -3,11 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Package, Plus, Coffee, Tag } from 'lucide-react';
+import type { components } from '@/lib/api-contract.generated';
+
+type Product = components['schemas']['ProductResponseDto'];
+type Category = components['schemas']['CategoryResponseDto'];
+type MenuResponse = components['schemas']['MenuResponseDto'];
 
 export default function AdminProductsPage() {
-  const [drinks, setDrinks] = useState<any[]>([]);
-  const [toppings, setToppings] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [drinks, setDrinks] = useState<Product[]>([]);
+  const [toppings, setToppings] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<'DRINK' | 'TOPPING'>('DRINK');
   const [loading, setLoading] = useState(true);
 
@@ -19,25 +24,12 @@ export default function AdminProductsPage() {
     setLoading(true);
     try {
       const [menuRes, catRes] = await Promise.all([
-        api.get('/products/menu'),
-        api.get('/categories'),
+        api.get<MenuResponse>('/products/menu'),
+        api.get<Category[]>('/categories'),
       ]);
       const menuData = menuRes.data;
-      if (menuData && menuData.drinks) {
-        setDrinks(menuData.drinks || []);
-        setToppings(menuData.toppings || []);
-      } else if (Array.isArray(menuData)) {
-        const allDrinks: any[] = [];
-        const allToppings: any[] = [];
-        menuData.forEach((cat: any) => {
-          (cat.products || []).forEach((p: any) => {
-            if (p.type === 'TOPPING') allToppings.push(p);
-            else allDrinks.push(p);
-          });
-        });
-        setDrinks(allDrinks);
-        setToppings(allToppings);
-      }
+      setDrinks(menuData.drinks);
+      setToppings(menuData.toppings);
       setCategories(catRes.data || []);
     } catch (err) {
       console.error(err);
@@ -109,7 +101,7 @@ export default function AdminProductsPage() {
                 <td className="py-3 px-4">
                   {item.sizes && item.sizes.length > 0 ? (
                     <div className="flex gap-1.5">
-                      {item.sizes.map((s: any) => (
+                      {item.sizes.map((s) => (
                         <span key={s.id} className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded text-[10px] font-bold">
                           {s.name} (+{Number(s.priceAdj).toLocaleString()}đ)
                         </span>

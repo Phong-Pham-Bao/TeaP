@@ -2,6 +2,9 @@ import { Injectable, ConflictException, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateSalarySlipDto } from '../dto/create-salary-slip.dto';
 import { QuerySalaryDto } from '../dto/query-salary.dto';
+import { Prisma } from '@prisma/client';
+import { paginate } from '../../../common/dto/pagination.dto';
+import { toSalarySlipResponse } from '../dto/hr-response.dto';
 
 @Injectable()
 export class SalaryService {
@@ -24,7 +27,7 @@ export class SalaryService {
 
     const netSalary = dto.baseSalary + (dto.bonus || 0) - (dto.deduction || 0);
 
-    return this.prisma.salarySlip.create({
+    const slip = await this.prisma.salarySlip.create({
       data: {
         userId: dto.userId,
         month: dto.month,
@@ -36,11 +39,12 @@ export class SalaryService {
         note: dto.note,
       }
     });
+    return toSalarySlipResponse(slip);
   }
 
   async findAll(query: QuerySalaryDto) {
     const { skip, take, userId, month, year, isPaid } = query;
-    const where: any = {};
+    const where: Prisma.SalarySlipWhereInput = {};
 
     if (userId) where.userId = userId;
     if (month) where.month = month;
@@ -60,14 +64,20 @@ export class SalaryService {
       this.prisma.salarySlip.count({ where }),
     ]);
 
-    return { data, total, page: query.page, limit: query.limit };
+    return paginate(
+      data.map(toSalarySlipResponse),
+      total,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
   }
 
   async getMySlips(userId: string) {
-    return this.prisma.salarySlip.findMany({
+    const slips = await this.prisma.salarySlip.findMany({
       where: { userId },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
+    return slips.map(toSalarySlipResponse);
   }
 
   async markAsPaid(id: string) {
@@ -76,12 +86,13 @@ export class SalaryService {
       throw new NotFoundException('Salary slip not found');
     }
 
-    return this.prisma.salarySlip.update({
+    const paidSlip = await this.prisma.salarySlip.update({
       where: { id },
       data: {
         isPaid: true,
         paidAt: new Date(),
       }
     });
+    return toSalarySlipResponse(paidSlip);
   }
 }

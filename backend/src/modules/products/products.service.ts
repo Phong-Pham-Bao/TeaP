@@ -3,6 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto } from './dto/query-product.dto';
+import { Prisma } from '@prisma/client';
+import { paginate } from '../../common/dto/pagination.dto';
+import { toMenuResponse, toProductResponse } from './dto/product-response.dto';
 
 @Injectable()
 export class ProductsService {
@@ -33,14 +36,14 @@ export class ProductsService {
         },
         include: { sizes: true },
       });
-      return product;
+      return toProductResponse(product);
     });
   }
 
   async findAll(query: QueryProductDto) {
     const { skip, take, type, categoryId, search, isActive } = query;
 
-    const where: any = {};
+    const where: Prisma.ProductWhereInput = {};
     if (type) where.type = type;
     if (categoryId) where.categoryId = categoryId;
     if (isActive !== undefined) where.isActive = isActive;
@@ -62,7 +65,12 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    return { data, total };
+    return paginate(
+      data.map(toProductResponse),
+      total,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
   }
 
   async findOne(id: string) {
@@ -84,7 +92,7 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return product;
+    return toProductResponse(product);
   }
 
   async getMenu() {
@@ -116,11 +124,11 @@ export class ProductsService {
       });
     });
 
-    return {
+    return toMenuResponse({
       drinks,
       toppings,
       categories,
-    };
+    });
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
@@ -145,7 +153,7 @@ export class ProductsService {
         await tx.productSize.deleteMany({ where: { productId: id } });
       }
 
-      return tx.product.update({
+      const product = await tx.product.update({
         where: { id },
         data: {
           ...productData,
@@ -160,6 +168,7 @@ export class ProductsService {
         },
         include: { sizes: true },
       });
+      return toProductResponse(product);
     });
   }
 
@@ -169,9 +178,10 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return this.prisma.product.update({
+    const product = await this.prisma.product.update({
       where: { id },
       data: { isActive: false },
     });
+    return toProductResponse(product);
   }
 }

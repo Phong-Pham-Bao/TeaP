@@ -6,6 +6,26 @@ import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { TransferStockDto } from './dto/transfer-stock.dto';
 import { QueryLedgerDto } from './dto/query-ledger.dto';
 import { Prisma, StockRefType } from '@prisma/client';
+import { businessTimestampRange } from '../../common/time/business-time';
+import { decimalQuantityToString } from '../../common/quantity/decimal-quantity';
+import {
+  toBalanceResponse,
+  toInventoryResponse,
+  toStockLedgerResponse,
+} from './dto/inventory-response.dto';
+
+interface InventoryBelowMinimumRow {
+  id: string;
+  branchId: string;
+  materialId: string;
+  currentStock: Prisma.Decimal;
+  minStock: Prisma.Decimal;
+  unit: string;
+  updatedAt: Date;
+  materialSku: string;
+  materialName: string;
+  branchName: string;
+}
 
 @Injectable()
 export class InventoryService {
@@ -18,55 +38,49 @@ export class InventoryService {
     if (branchId) {
       where.branchId = branchId;
     }
-    // belowMin logic has to be handled custom if we need currentStock < minStock in Prisma directly
-    // Unfortunately Prisma doesn't support field-to-field comparison in `where` (like `currentStock: { lt: prisma.inventory.fields.minStock }`)
-    // so we can't easily filter belowMin using standard Prisma where without raw queries or filtering post-fetch.
-    // However, if we just use raw SQL for everything it's hard. Let's do a trick: we'll get alerts using a separate endpoint for `currentStock < minStock`.
-    // Wait, let's just fetch and if belowMin is true, we can either filter in JS (bad for pagination) or use queryRaw.
-    // Actually, for getAlerts we definitely use raw or Prisma. Let's filter belowMin with a raw query if it's true, or fetch all then filter?
-    // Wait, the prompt says: "belowMin (IsOptional, IsBoolean) — filter items below min_stock"
-    // Let's implement it using raw SQL if belowMin is provided, or just fetch all and filter in JS if it's acceptable, but pagination makes JS filtering bad.
-    // Actually, let's use Prisma query where we can. Prisma preview feature `fieldReference` supports this, but we don't know if it's enabled.
-    // Let's use Prisma `queryRaw` for `findAll` if belowMin is true, or just use `findMany` and ignore field reference if we can't.
-    // Actually, I'll just write it.
-
-    // Better: let's just do findMany and if belowMin is true, we add a raw query filter if possible, but let's just use Prisma raw query for everything if belowMin is true to ensure correct pagination.
-    if (belowMin) {
-        // Just return alerts essentially.
-        // Wait, I can use `findMany` and for belowMin we might just fetch and return, but let's stick to simple where if not belowMin.
-        // I will use Prisma's `where` and if belowMin is true, we will just use a raw query or fetch all and filter (bad but safe if fieldRef not enabled).
-        // Let's assume we can't do field comparison easily, I will use raw query for belowMin true.
-    }
-    
-    // I will write it simply first.
     let items;
     let total;
 
     if (belowMin) {
-       // use query raw
-       const branchCondition = branchId ? Prisma.sql`AND i.branch_id = ${branchId}` : Prisma.empty;
-       const countResult: any = await this.prisma.$queryRaw`
-         SELECT COUNT(*)::int as count 
-         FROM inventories i 
-         WHERE i.current_stock < i.min_stock ${branchCondition}
-       `;
-       total = countResult[0].count;
+      const branchCondition = branchId
+        ? Prisma.sql`AND i.branch_id = ${branchId}`
+        : Prisma.empty;
+      const countResult = await this.prisma.$queryRaw<Array<{ count: number }>>`
+        SELECT COUNT(*)::int as count
+        FROM inventories i
+        WHERE i.current_stock < i.min_stock ${branchCondition}
+      `;
+      total = countResult[0]?.count ?? 0;
 
-       items = await this.prisma.$queryRaw`
-         SELECT i.*, p.name as "materialName", b.name as "branchName"
-         FROM inventories i
-         JOIN products p ON i.material_id = p.id
-         JOIN branches b ON i.branch_id = b.id
-         WHERE i.current_stock < i.min_stock ${branchCondition}
-         ORDER BY i.updated_at DESC
-         LIMIT ${take} OFFSET ${skip}
-       `;
+      const rows = await this.prisma.$queryRaw<InventoryBelowMinimumRow[]>`
+        SELECT i.id,
+               i.branch_id AS "branchId",
+               i.material_id AS "materialId",
+               i.current_stock AS "currentStock",
+               i.min_stock AS "minStock",
+               i.unit,
+               i.updated_at AS "updatedAt",
+               p.sku AS "materialSku",
+               p.name AS "materialName",
+               b.name AS "branchName"
+        FROM inventories i
+        JOIN products p ON i.material_id = p.id
+        JOIN branches b ON i.branch_id = b.id
+        WHERE i.current_stock < i.min_stock ${branchCondition}
+        ORDER BY i.updated_at DESC
+        LIMIT ${take} OFFSET ${skip}
+      `;
+      items = rows.map(({ materialSku, materialName, branchName, ...inventory }) => ({
+        ...inventory,
+        material: { sku: materialSku, name: materialName },
+        branch: { name: branchName },
+      }));
     } else {
        total = await this.prisma.inventory.count({ where });
        items = await this.prisma.inventory.findMany({
          where,
          include: {
-           material: { select: { name: true } },
+           material: { select: { sku: true, name: true } },
            branch: { select: { name: true } },
          },
          skip,
@@ -76,7 +90,7 @@ export class InventoryService {
     }
 
     return {
-      data: items,
+      data: items.map(toInventoryResponse),
       meta: {
         total,
         page: query.page,
@@ -136,7 +150,7 @@ export class InventoryService {
             createdBy: userId,
           },
         });
-        results.push({ materialId: item.materialId, balanceAfter });
+        results.push(toBalanceResponse({ materialId: item.materialId, balanceAfter }));
       }
       return results;
     });
@@ -177,7 +191,7 @@ export class InventoryService {
         },
       });
 
-      return { success: true, balanceAfter: newStock };
+      return toBalanceResponse({ success: true, balanceAfter: newStock });
     });
   }
 
@@ -280,7 +294,11 @@ export class InventoryService {
         });
       }
 
-      return { success: true, sourceAfter, destAfter };
+      return {
+        success: true,
+        sourceAfter: decimalQuantityToString(sourceAfter),
+        destAfter: decimalQuantityToString(destAfter),
+      };
     });
   }
 
@@ -289,6 +307,7 @@ export class InventoryService {
     const items = await this.prisma.$queryRaw`
       SELECT i.id, i.branch_id as "branchId", i.material_id as "materialId", 
              i.current_stock as "currentStock", i.min_stock as "minStock", i.unit,
+             i.updated_at as "updatedAt", p.sku as "materialSku",
              p.name as "materialName", b.name as "branchName"
       FROM inventories i
       JOIN products p ON i.material_id = p.id
@@ -296,7 +315,17 @@ export class InventoryService {
       WHERE i.current_stock < i.min_stock ${branchCondition}
       ORDER BY b.name ASC, p.name ASC
     `;
-    return items;
+    return (items as InventoryBelowMinimumRow[]).map((item) => ({
+      id: item.id,
+      branchId: item.branchId,
+      materialId: item.materialId,
+      currentStock: decimalQuantityToString(item.currentStock),
+      minStock: decimalQuantityToString(item.minStock),
+      unit: item.unit,
+      updatedAt: item.updatedAt,
+      material: { sku: item.materialSku, name: item.materialName },
+      branch: { name: item.branchName },
+    }));
   }
 
   async getLedger(query: QueryLedgerDto) {
@@ -307,9 +336,7 @@ export class InventoryService {
     if (materialId) where.materialId = materialId;
     if (refType) where.refType = refType;
     if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
+      where.createdAt = businessTimestampRange(startDate, endDate);
     }
 
     const total = await this.prisma.stockLedger.count({ where });
@@ -329,7 +356,7 @@ export class InventoryService {
     });
 
     return {
-      data: items,
+      data: items.map(toStockLedgerResponse),
       meta: {
         total,
         page: query.page,
